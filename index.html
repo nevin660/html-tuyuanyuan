@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🌸 花神语文大对战 🌸</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", sans-serif;
+    background: radial-gradient(circle at 50% 0%, #ffe9c7 0%, #ffd2a6 45%, #f7a880 100%);
+    min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    padding: 20px; color: #5a3520;
+  }
+  .panel {
+    width: 100%; max-width: 880px;
+    background: rgba(255, 248, 238, 0.82);
+    border: 1px solid rgba(255,255,255,0.6);
+    border-radius: 28px; padding: 30px 26px 26px;
+    box-shadow: 0 20px 60px rgba(180, 90, 40, 0.28); backdrop-filter: blur(6px);
+  }
+  h1 {
+    text-align: center; font-size: clamp(24px, 5vw, 38px); color: #e8642e;
+    text-shadow: 0 2px 10px rgba(255,140,60,0.3); margin-bottom: 6px; letter-spacing: 2px;
+  }
+  .subtitle { text-align: center; color: #a9714c; font-size: 14px; margin-bottom: 18px; }
+
+  /* ---- 名字输入 ---- */
+  .name-row { display:flex; justify-content:center; margin-bottom: 20px; }
+  .name-row input {
+    width: min(380px, 100%); padding: 14px 18px; font-size: 17px;
+    border: 2px solid #ffc28a; border-radius: 14px; background:#fffdf9; color:#6b4226;
+    outline: none; text-align:center; transition:border-color .15s, box-shadow .15s;
+  }
+  .name-row input:focus { border-color:#ff7a3c; box-shadow:0 0 0 3px rgba(255,122,60,0.2); }
+
+  /* ---- 历史/段位卡（选花页）---- */
+  .history-card { display:flex; align-items:center; gap:14px; background: rgba(255,255,255,0.62);
+    border:1px solid rgba(255,180,130,0.5); border-radius:16px; padding:12px 16px; margin-bottom:18px; }
+  .hc-left { text-align:center; flex:0 0 auto; }
+  .hc-badge { font-size:34px; line-height:1; }
+  .hc-rank { font-size:13px; font-weight:800; color:#c2410c; margin-top:2px; }
+  .hc-mid { flex:1; }
+  .hc-line { font-weight:800; color:#6b4226; font-size:15px; }
+  .hc-stats { font-size:13px; color:#a9714c; margin:2px 0 6px; }
+  .hc-progress { height:9px; background: rgba(255,170,110,0.28); border-radius:6px; overflow:hidden; }
+  .hc-progress-fill { height:100%; width:0%; border-radius:6px; background: linear-gradient(90deg,#ff9a3c,#ff6b35); transition:width .5s; }
+  .hc-next { font-size:12px; color:#8a5a36; margin-top:5px; }
+
+  /* ---- 段位面板（结算页）---- */
+  .rank-panel { background: rgba(255,255,255,0.6); border:1px solid rgba(255,180,130,0.5);
+    border-radius:16px; padding:16px; margin:0 auto 18px; max-width:520px; }
+  .rp-top { display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:8px; }
+  .rp-badge { font-size:30px; }
+  .rp-name { font-size:20px; font-weight:900; color:#c2410c; }
+  .rp-progress { height:11px; background: rgba(255,170,110,0.28); border-radius:7px; overflow:hidden; }
+  .rp-progress-fill { height:100%; width:0%; border-radius:7px; background: linear-gradient(90deg,#36c46b,#7be08f); transition:width .6s; }
+  .rp-next { font-size:13px; color:#8a5a36; margin-top:7px; }
+  .rp-record { font-size:13px; color:#a9714c; margin-top:4px; }
+  .rp-up { color:#2f9e44; font-weight:800; }
+
+  /* ---- 选花网格 ---- */
+  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+  .card {
+    background: #fffdf9; border-radius: 18px; padding: 16px 8px 12px; text-align: center;
+    cursor: pointer; border: 4px solid transparent; box-shadow: 0 4px 12px rgba(200,120,60,0.12);
+    transition: transform .15s, border-color .15s, box-shadow .15s; user-select: none;
+  }
+  .card:hover { transform: translateY(-4px); box-shadow: 0 10px 24px rgba(200,110,50,0.3); }
+  .card svg { width: 76px; height: 76px; display: block; margin: 0 auto 8px; }
+  .card .name { color: #6b4226; font-size: 17px; font-weight: 700; }
+  .card .lvl { color:#c2410c; font-size:12px; margin-top:2px; }
+  .card.selected {
+    border-color: #ff7a3c; box-shadow: 0 0 0 4px rgba(255,122,60,0.22), 0 10px 26px rgba(200,90,40,0.35);
+    transform: translateY(-4px);
+  }
+  .start-btn {
+    width: 100%; margin-top: 22px; padding: 18px; font-size: 20px; font-weight: 800;
+    letter-spacing: 4px; color: #fff; border: none; border-radius: 16px; cursor: pointer;
+    background: linear-gradient(90deg, #ff8a3c, #ff6b35, #f0532b);
+    box-shadow: 0 8px 20px rgba(230,90,40,0.4); transition: filter .15s, transform .1s;
+  }
+  .start-btn:hover { filter: brightness(1.1); }
+  .start-btn:active { transform: scale(0.99); }
+  .start-btn:disabled { filter: grayscale(0.55) brightness(0.85); cursor: not-allowed; }
+
+  /* ---- 对战 HUD：你 VS 花神 ---- */
+  .battle-bar { display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+  .fighter { flex:1; background: rgba(255,255,255,0.6); border-radius:16px; padding:10px 12px; text-align:center; border:2px solid transparent; transition:border-color .25s, box-shadow .25s; }
+  .fighter.leading { border-color:#ff8a3c; box-shadow:0 0 0 3px rgba(255,138,60,0.18); }
+  .fighter .top { display:flex; align-items:center; gap:8px; margin-bottom:4px; justify-content:center; }
+  .fighter .top svg { width:38px; height:38px; }
+  .fighter .avatar-emoji { font-size:30px; width:38px; text-align:center; }
+  .fighter .fname { font-weight:800; font-size:15px; color:#6b4226; }
+  .fighter .frole { font-size:11px; color:#a9714c; }
+  .bigscore { font-size:36px; font-weight:900; line-height:1; color:#2f9e44; }
+  .bigscore.foe { color:#e8642e; }
+  .scoretip { font-size:11px; color:#a9714c; }
+  .vs { font-size:22px; font-weight:900; color:#e8642e; flex:0 0 auto; }
+
+  .progress-wrap { background: rgba(255,170,110,0.25); border-radius: 10px; height: 9px; overflow: hidden; margin-bottom: 14px; }
+  .progress-bar { height: 100%; width: 0%; background: linear-gradient(90deg,#ff9a3c,#ff6b35); transition: width .3s; }
+
+  .timer-row { display:flex; align-items:center; gap:10px; margin-bottom:16px; }
+  .timer-label { font-size:13px; color:#a9714c; flex:0 0 auto; font-weight:700; }
+  .timer-wrap { flex:1; height:12px; background: rgba(255,170,110,0.25); border-radius:8px; overflow:hidden; }
+  .timer-fill { height:100%; width:100%; border-radius:8px; background: linear-gradient(90deg,#36c46b,#7be08f); transition: width 1s linear, background .3s; }
+  .timer-fill.warn { background: linear-gradient(90deg,#ffb347,#ffd34d); }
+  .timer-fill.danger { background: linear-gradient(90deg,#ff5c5c,#ff8a3c); }
+  .timer-num { flex:0 0 auto; width:34px; text-align:right; font-weight:800; font-size:18px; color:#c2410c; }
+  .timer-num.danger { color:#e8542e; animation: blink .6s steps(2,start) infinite; }
+  @keyframes blink { 50% { opacity:.35; } }
+
+  .qcard { background: rgba(255,255,255,0.6); border: 1px solid rgba(255,180,130,0.4); border-radius: 20px; padding: 24px 22px; }
+  .qtag { display:inline-block; background: rgba(255,122,60,0.16); color:#e8642e; font-size:13px; padding:4px 12px; border-radius:20px; margin-bottom:14px; }
+  .qflower { text-align:center; margin: 2px 0 12px; }
+  .qflower svg { width: 80px; height: 80px; }
+  .qtext { font-size: clamp(19px, 3vw, 25px); font-weight: 700; line-height: 1.55; margin-bottom: 20px; text-align: center; color:#5a3520; }
+  .options { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; }
+  @media (max-width: 560px){ .options { grid-template-columns: 1fr; } .grid { grid-template-columns: repeat(2, 1fr); } }
+  .opt {
+    background: #fffdf9; color:#6b4226; border: 3px solid transparent; border-radius: 14px;
+    padding: 15px; font-size: 18px; font-weight: 600; cursor: pointer;
+    box-shadow:0 3px 8px rgba(200,120,60,0.12); transition: transform .1s, border-color .15s, background .15s; text-align: center;
+  }
+  .opt:hover { transform: translateY(-2px); border-color: #ff9a3c; }
+  .opt.correct { background:#d8f5e1; border-color:#34c759; color:#1a7a35; }
+  .opt.wrong { background:#ffe0e0; border-color:#ff5c5c; color:#b32020; }
+  .opt.disabled { pointer-events:none; opacity:.92; }
+  .feedback { margin-top:18px; background: rgba(255,240,225,0.9); border-radius:14px; padding:16px; font-size:16px; line-height:1.6; color:#6b4226; display:none; }
+  .feedback.show { display:block; animation: fade .3s; }
+  .feedback .fb-title { font-weight:800; font-size:18px; margin-bottom:6px; }
+  .feedback.ok .fb-title { color:#2f9e44; }
+  .feedback.no .fb-title { color:#e8542e; }
+  .feedback .tip { color:#c2410c; margin-top:6px; }
+  .feedback .lead { color:#6b4226; margin-top:8px; font-weight:700; }
+  .next-btn { margin-top:16px; width:100%; padding:15px; font-size:18px; font-weight:800; border:none; border-radius:14px; cursor:pointer; color:#fff; background: linear-gradient(90deg,#ff9a3c,#ff6b35); display:none; letter-spacing:2px; }
+  .next-btn.show { display:block; }
+  @keyframes fade { from{opacity:0;transform:translateY(8px);} to{opacity:1;transform:none;} }
+
+  /* ---- 结算 ---- */
+  .result { text-align:center; padding: 14px 10px; }
+  .result .big-flower svg { width:120px; height:120px; }
+  .result .outcome { font-size:30px; font-weight:900; margin:10px 0 4px; }
+  .result .outcome.win { color:#2f9e44; }
+  .result .outcome.lose { color:#e8542e; }
+  .result .rank { font-size:22px; font-weight:800; color:#e8642e; margin-bottom:8px; }
+  .result .score-line { font-size:17px; color:#8a5a36; margin-bottom:5px; }
+  .result .score-line b { color:#c2410c; font-size:21px; }
+  .result .comment { color:#a9714c; margin:14px auto 22px; max-width:540px; line-height:1.6; }
+  .hide { display:none !important; }
+</style>
+</head>
+<body>
+<div class="panel">
+
+  <!-- ===== 选花页 ===== -->
+  <section id="page-select">
+    <h1>花神语文大对战</h1>
+    <div class="subtitle">输入名字 → 选一位花神当对手 → 15道题、每题10分（满分150）、每题限时30秒，比花神分高就获胜！（3～6年级）</div>
+    <div class="name-row"><input id="player-name" maxlength="8" placeholder="✍️ 请输入你的名字" autocomplete="off"></div>
+    <div class="history-card hide" id="history-card">
+      <div class="hc-left">
+        <div class="hc-badge" id="hc-badge">🌱</div>
+        <div class="hc-rank" id="hc-rank">花间萌新</div>
+      </div>
+      <div class="hc-mid">
+        <div class="hc-line" id="hc-greet">欢迎回来！</div>
+        <div class="hc-stats" id="hc-stats">胜 0 · 负 0 · 最高 0 分</div>
+        <div class="hc-progress"><div class="hc-progress-fill" id="hc-progress-fill"></div></div>
+        <div class="hc-next" id="hc-next"></div>
+      </div>
+    </div>
+    <div class="grid" id="flower-grid"></div>
+    <button class="start-btn" id="start-btn" disabled>⚔️ 请先输入名字并选择花神</button>
+  </section>
+
+  <!-- ===== 对战页 ===== -->
+  <section id="page-quiz" class="hide">
+    <div class="battle-bar">
+      <div class="fighter side-me" id="side-me">
+        <div class="top"><span class="avatar-emoji">🧒</span>
+          <div><div class="fname" id="me-name">我</div><div class="frole">挑战者</div></div></div>
+        <div class="bigscore" id="me-score">0</div>
+        <div class="scoretip">分</div>
+      </div>
+      <div class="vs">VS</div>
+      <div class="fighter side-foe" id="side-foe">
+        <div class="top"><span id="foe-icon"></span>
+          <div><div class="fname" id="foe-name">花神</div><div class="frole">花神 · 对手</div></div></div>
+        <div class="bigscore foe" id="foe-score">0</div>
+        <div class="scoretip">分</div>
+      </div>
+    </div>
+    <div class="progress-wrap"><div class="progress-bar" id="progress"></div></div>
+
+    <div class="timer-row">
+      <span class="timer-label">⏱️ 倒计时</span>
+      <div class="timer-wrap"><div class="timer-fill" id="timer-fill"></div></div>
+      <span class="timer-num" id="timer-num">30</span>
+    </div>
+
+    <div class="qcard">
+      <div class="qtag" id="qtag">第 1 题</div>
+      <div class="qflower" id="qflower"></div>
+      <div class="qtext" id="qtext">题目</div>
+      <div class="options" id="options"></div>
+      <div class="feedback" id="feedback">
+        <div class="fb-title" id="fb-title"></div>
+        <div id="fb-body"></div>
+      </div>
+      <button class="next-btn" id="next-btn">下一题 →</button>
+    </div>
+  </section>
+
+  <!-- ===== 结算页 ===== -->
+  <section id="page-result" class="hide">
+    <div class="result">
+      <div class="big-flower" id="result-flower"></div>
+      <div class="outcome" id="outcome">胜利！</div>
+      <div class="rank" id="rank"></div>
+      <div class="score-line">最终得分 <b id="final-score">0</b> 分</div>
+      <div class="score-line">答对 <b id="final-correct">0</b> / <span id="final-total">10</span> 题</div>
+      <div class="comment" id="comment"></div>
+      <div class="rank-panel" id="rank-panel">
+        <div class="rp-top"><span class="rp-badge" id="rp-badge">🌱</span>
+          <span class="rp-name" id="rp-name">花间萌新</span></div>
+        <div class="rp-progress"><div class="rp-progress-fill" id="rp-progress-fill"></div></div>
+        <div class="rp-next" id="rp-next"></div>
+        <div class="rp-record" id="rp-record"></div>
+      </div>
+      <button class="start-btn" id="again-btn">🔄 再来一局</button>
+    </div>
+  </section>
+
+</div>
+
+<script>
+/* ---------------- 十二花神 ---------------- */
+const FLOWERS = {
+  mei:    { name:"梅花花神·林逋",  short:"梅花" },
+  xing:   { name:"杏花花神·陆游",  short:"杏花" },
+  tao:    { name:"桃花花神·息夫人", short:"桃花" },
+  shao:   { name:"芍药花神·杨玉环", short:"芍药" },
+  liu:    { name:"石榴花神·张骞",  short:"石榴花" },
+  he:     { name:"荷花花神·李白",  short:"荷花" },
+  kui:    { name:"蜀葵花神·徐渭",  short:"蜀葵" },
+  gui:    { name:"桂花花神·李清照", short:"桂花" },
+  ju:     { name:"菊花花神·陶渊明", short:"菊花" },
+  furong: { name:"芙蓉花神·王昭君", short:"芙蓉" },
+  ch6:    { name:"山茶花神·白居易", short:"山茶" },
+  shui:   { name:"水仙花神·洛神",  short:"水仙" },
+};
+const ORDER = ["mei","xing","tao","shao","liu","he","kui","gui","ju","furong","ch6","shui"];
+
+/* ---------------- SVG 手绘花朵（写实版）---------------- */
+// 椭圆花瓣环（圆润花瓣，如梅、杏、芙蓉）
+function ellRing(n, rx, ry, cy, fill, stroke, sw){
+  let s=""; for(let i=0;i<n;i++){const a=(360/n)*i;
+    s+=`<ellipse cx="50" cy="${cy}" rx="${rx}" ry="${ry}" fill="${fill}" stroke="${stroke}" stroke-width="${sw||1.2}" transform="rotate(${a} 50 50)"/>`;}
+  return s;
+}
+// 尖瓣环（桃、荷、水仙等），h=长度 w=半宽
+function petalUp(h,w){return `M50 51 C ${50-w} ${51-h*0.55} ${50-w*0.45} ${51-h} 50 ${51-h} C ${50+w*0.45} ${51-h} ${50+w} ${51-h*0.55} 50 51 Z`;}
+function tipRing(n,h,w,fill,stroke,sw){
+  let s=""; for(let i=0;i<n;i++){const a=(360/n)*i;
+    s+=`<path d="${petalUp(h,w)}" fill="${fill}" stroke="${stroke}" stroke-width="${sw||1.1}" transform="rotate(${a} 50 51)"/>`;}
+  return s;
+}
+// 雄蕊（中心放射的小点）
+function stamens(n,len,line,dot){
+  let s=""; for(let i=0;i<n;i++){const a=(360/n)*i;
+    s+=`<g transform="rotate(${a} 50 50)"><line x1="50" y1="50" x2="50" y2="${50-len}" stroke="${line}" stroke-width="0.9"/><circle cx="50" cy="${50-len}" r="1.5" fill="${dot}"/></g>`;}
+  return s;
+}
+function flowerSVG(key){
+  const rg=(id,c0,c1)=>`<radialGradient id="${id}" cx="50%" cy="38%" r="62%"><stop offset="0%" stop-color="${c0}"/><stop offset="100%" stop-color="${c1}"/></radialGradient>`;
+  const g=(defs,inner)=>`<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><defs>${defs}</defs>${inner}</svg>`;
+  switch(key){
+    case "mei": // 梅花：5圆瓣+梅枝+花蕊
+      return g(rg('gmei','#ffe6f0','#f08bb2'),
+        `<path d="M12 92 Q42 74 86 44" stroke="#6e4326" stroke-width="4.5" fill="none" stroke-linecap="round"/>
+         <path d="M58 61 Q70 57 80 61" stroke="#6e4326" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+         ${ellRing(5,12,16,27,'url(#gmei)','#dd6f9c',1.3)}
+         <circle cx="50" cy="50" r="7.5" fill="#fff4d2"/>
+         ${stamens(9,11,'#e58ab0','#f3b53a')}<circle cx="50" cy="50" r="3" fill="#efb13a"/>`);
+    case "xing": // 杏花：5白粉圆瓣+红萼+花蕊
+      return g(rg('gxing','#ffffff','#ffd6df'),
+        `${ellRing(5,12,15,27,'url(#gxing)','#f0b8c4',1.2)}
+         ${[0,72,144,216,288].map(a=>`<path d="M50 38 l3 -7 -6 0 z" fill="#c0392b" transform="rotate(${a} 50 50)"/>`).join("")}
+         <circle cx="50" cy="50" r="7" fill="#fff2c4"/>${stamens(8,10,'#d98aa0','#e0392b')}<circle cx="50" cy="50" r="2.6" fill="#d35400"/>`);
+    case "tao": // 桃花：5尖瓣桃红
+      return g(rg('gtao','#ffd0df','#fb6f9e'),
+        `${tipRing(5,40,15,'url(#gtao)','#ef5f8e',1.3)}
+         <circle cx="50" cy="50" r="6.5" fill="#fff0c2"/>${stamens(10,9,'#e25f8a','#f4c33c')}<circle cx="50" cy="50" r="2.6" fill="#e0794a"/>`);
+    case "shao": // 芍药：多层重瓣
+      return g(rg('gshao','#ffc2d6','#e85d86'),
+        `${ellRing(8,13,17,26,'url(#gshao)','#dc4f7a',1.2)}
+         ${ellRing(8,10,13,30,'#ffaecb','#e76b95',1)}
+         ${ellRing(7,7,10,33,'#ffd0e0','#ef82a6',1)}
+         ${ellRing(6,4,6,36,'#ffe2ec','#f3a0bd',0.8)}
+         <circle cx="50" cy="50" r="5" fill="#fff3d0"/>`);
+    case "liu": // 石榴花：红色花萼+皱瓣
+      return g(rg('gliu','#ff7a4d','#d62f1a'),
+        `<path d="M40 92 Q50 100 60 92 L58 70 Q50 76 42 70 Z" fill="#c0341f"/>
+         <path d="M42 72 Q50 66 58 72" stroke="#8f2414" stroke-width="2" fill="none"/>
+         ${tipRing(8,36,11,'url(#gliu)','#b62a16',1.2)}
+         <circle cx="50" cy="50" r="6.5" fill="#ffd24d"/>${stamens(10,8,'#c0341f','#fff0a0')}`);
+    case "he": // 荷花：尖瓣粉红+莲蓬+荷叶
+      return g(rg('ghe','#fff2f7','#f59cc0'),
+        `<ellipse cx="50" cy="84" rx="44" ry="11" fill="#3f9e62"/>
+         <ellipse cx="50" cy="82" rx="44" ry="10" fill="#52bd78"/>
+         <path d="M50 82 L50 58" stroke="#2f8f57" stroke-width="2.4"/>
+         ${tipRing(8,42,10,'url(#ghe)','#ec84ac',1.1)}
+         ${tipRing(6,30,8,'#ffd9e6','#f2a0bf',1)}
+         <ellipse cx="50" cy="49" rx="8.5" ry="7" fill="#bdebcb" stroke="#7cc796" stroke-width="1"/>
+         ${[[46,47],[50,46],[54,47],[48,50],[52,50]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="1.2" fill="#4aa46a"/>`).join("")}`);
+    case "kui": // 蜀葵：大单瓣+深色花心
+      return g(rg('gkui','#ff9bb4','#e34d77'),
+        `${ellRing(6,16,18,24,'url(#gkui)','#cf3f68',1.3)}
+         <circle cx="50" cy="50" r="13" fill="#a81e54"/>
+         <circle cx="50" cy="50" r="6" fill="#ffe27a"/>${stamens(8,5,'#7c1438','#fff0a0')}`);
+    case "gui": // 桂花：成簇小黄花+绿叶
+      return g(rg('ggui','#ffe27a','#f2a91c'),
+        `${[[34,40],[58,38],[44,54],[64,56],[33,60],[52,66],[48,40]].map(([x,y])=>
+          `<g transform="translate(${x-50} ${y-50})">${[0,90,180,270].map(a=>`<ellipse cx="50" cy="44" rx="4.5" ry="6" fill="url(#ggui)" stroke="#dd9a14" stroke-width="0.9" transform="rotate(${a} 50 50)"/>`).join("")}<circle cx="50" cy="50" r="2.2" fill="#b86d12"/></g>`).join("")}
+         <path d="M20 70 Q34 60 44 66" stroke="#3f9e5b" stroke-width="2.4" fill="none" stroke-linecap="round"/>
+         <path d="M76 36 Q64 30 56 36" stroke="#3f9e5b" stroke-width="2.4" fill="none" stroke-linecap="round"/>`);
+    case "ju": // 菊花：多层细长花瓣
+      return g(rg('gju','#ffe27a','#f0a81c'),
+        `${tipRing(20,40,4,'url(#gju)','#e8a519',0.8)}
+         ${tipRing(20,32,4,'#ffe98f','#f0bf3c',0.7)}
+         ${tipRing(14,22,4,'#ffd23f','#e0a017',0.7)}
+         <circle cx="50" cy="50" r="7" fill="#cf8a1f"/>`);
+    case "furong": // 芙蓉：5大尖瓣+花蕊柱
+      return g(rg('gfu','#fff0f5','#f786ab'),
+        `${tipRing(5,42,17,'url(#gfu)','#ee6f9b',1.3)}
+         <circle cx="50" cy="50" r="7" fill="#ff5f8a"/>
+         <line x1="50" y1="50" x2="50" y2="32" stroke="#ffd24d" stroke-width="1.4"/>
+         ${[28,31,34].map(y=>`<circle cx="50" cy="${y}" r="1.6" fill="#ffcf3f"/>`).join("")}`);
+    case "ch6": // 山茶：红色重瓣圆瓣+黄蕊
+      return g(rg('gch','#ff6b7e','#c11d2e'),
+        `${ellRing(7,13,16,27,'url(#gch)','#a3162a',1.2)}
+         ${ellRing(7,9,12,31,'#ef4659','#bd2235',1)}
+         ${ellRing(5,5,8,34,'#f47080','#cf3043',0.9)}
+         <circle cx="50" cy="50" r="6.5" fill="#ffe27a"/>${stamens(12,7,'#caa01f','#fff0a0')}`);
+    case "shui": // 水仙：6白瓣+橙黄副冠
+      return g(rg('gsh','#ffffff','#eef6da'),
+        `${ellRing(6,11,15,26,'url(#gsh)','#cfe0b4',1.1)}
+         <circle cx="50" cy="50" r="11" fill="#ffe9a8" stroke="#ecae2f" stroke-width="2.4"/>
+         <circle cx="50" cy="50" r="6" fill="#ffd24d"/>${stamens(6,3.5,'#d68f1c','#fff3c0')}`);
+  }
+  return g('',`<circle cx="50" cy="50" r="30" fill="#ffc6d8"/>`);
+}
+
+/* ---------------- 题库（三年级下册语文重点）----------------
+   type: 古诗 / 作者 / 好词好句 / 近义词 / 反义词 / 多音字 / 字词 / 修辞 / 课文常识
+*/
+const BANK = [
+  // ===== 古诗填空 =====
+  {type:"古诗", q:'补全诗句：“迟日江山丽，______。”', o:["春风花草香","处处闻啼鸟","花落知多少","柳暗花明又一村"], a:0, tip:"出自杜甫《绝句》（迟日江山丽）。"},
+  {type:"古诗", q:'补全诗句：“竹外桃花三两枝，______。”', o:["春江水暖鸭先知","映日荷花别样红","二月春风似剪刀","霜叶红于二月花"], a:0, tip:"出自苏轼《惠崇春江晚景》。"},
+  {type:"古诗", q:'补全诗句：“梅子黄时日日晴，______。”', o:["小溪泛尽却山行","柳荫不减来时路","千里莺啼绿映红","水村山郭酒旗风"], a:0, tip:"出自曾几《三衢道中》。"},
+  {type:"古诗", q:'补全诗句：“独在异乡为异客，______。”', o:["每逢佳节倍思亲","低头思故乡","西出阳关无故人","路上行人欲断魂"], a:0, tip:"出自王维《九月九日忆山东兄弟》。"},
+  {type:"古诗", q:'补全诗句：“清明时节雨纷纷，______。”', o:["路上行人欲断魂","牧童遥指杏花村","借问酒家何处有","春风送暖入屠苏"], a:0, tip:"出自杜牧《清明》。"},
+  {type:"古诗", q:'补全诗句：“爆竹声中一岁除，______。”', o:["春风送暖入屠苏","总把新桃换旧符","千门万户曈曈日","遍插茱萸少一人"], a:0, tip:"出自王安石《元日》，写的是过年。"},
+  {type:"古诗", q:'“采菊东篱下，______。”下一句是？', o:["悠然见南山","为有暗香来","欲辨已忘言","心远地自偏"], a:0, tip:"出自陶渊明《饮酒》，对应九月菊花花神。"},
+  {type:"古诗", q:'“疏影横斜水清浅，______。”下一句是？', o:["暗香浮动月黄昏","凌寒独自开","只留清气满乾坤","为有暗香来"], a:0, tip:"出自林逋《山园小梅》，对应梅花花神。"},
+  // ===== 作者 =====
+  {type:"作者", q:'《惠崇春江晚景》的作者是谁？', o:["苏轼","杜甫","王安石","李白"], a:0, tip:"《惠崇春江晚景》是宋代苏轼的题画诗。"},
+  {type:"作者", q:'《元日》（爆竹声中一岁除）的作者是谁？', o:["王安石","杜牧","王维","白居易"], a:0, tip:"《元日》是北宋王安石写春节的诗。"},
+  {type:"作者", q:'课文《荷花》的作者是哪位著名作家？', o:["叶圣陶","老舍","巴金","冰心"], a:0, tip:"《荷花》是叶圣陶先生的散文。"},
+  {type:"作者", q:'“独在异乡为异客，每逢佳节倍思亲”的作者是？', o:["王维","杜甫","孟浩然","王昌龄"], a:0, tip:"出自唐代王维《九月九日忆山东兄弟》。"},
+  // ===== 好词好句 · ABB / 搭配 =====
+  {type:"好词好句", q:'下面哪个是“ABB式”的词语？', o:["绿油油","花花绿绿","干干净净","又大又圆"], a:0, tip:"ABB式如：绿油油、红彤彤、金灿灿。"},
+  {type:"好词好句", q:'下面哪个词语是“ABB式”？', o:["亮晶晶","马马虎虎","三心二意","龙飞凤舞"], a:0, tip:"亮晶晶、白茫茫、黑乎乎都是ABB式。"},
+  {type:"好词好句", q:'选出最合适的搭配：（　　）的荷叶', o:["碧绿","火红","雪白","金黄"], a:0, tip:"荷叶是碧绿的，颜色要和事物相配。"},
+  {type:"好词好句", q:'选出最合适的搭配：（　　）地奔跑', o:["飞快","认真","仔细","安静"], a:0, tip:"“地”前面常用形容动作的词，如飞快地奔跑。"},
+  {type:"好词好句", q:'“一（　）清泉”括号里填哪个量词最好？', o:["眼","片","条","朵"], a:0, tip:"一眼清泉，泉水常用量词“眼”。"},
+  // ===== 修辞手法 =====
+  {type:"修辞", q:'“荷叶挨挨挤挤的，像一个个碧绿的大圆盘。”用了什么修辞？', o:["比喻","拟人","夸张","排比"], a:0, tip:"把荷叶比作大圆盘，是比喻句。"},
+  {type:"修辞", q:'“小鸟在枝头唱着欢快的歌。”用了什么修辞？', o:["拟人","比喻","夸张","设问"], a:0, tip:"把小鸟当人来写（唱歌），是拟人句。"},
+  {type:"修辞", q:'“燕子的尾巴像一把锋利的剪刀。”用了什么修辞？', o:["比喻","拟人","反问","排比"], a:0, tip:"把尾巴比作剪刀，是比喻句。"},
+  // ===== 近义词 =====
+  {type:"近义词", q:'“美丽”的近义词是？', o:["漂亮","难看","丑陋","普通"], a:0, tip:"美丽 ≈ 漂亮，意思相近。"},
+  {type:"近义词", q:'“著名”的近义词是？', o:["有名","无名","平常","陌生"], a:0, tip:"著名 ≈ 有名。"},
+  {type:"近义词", q:'“仔细”的近义词是？', o:["认真","马虎","随便","粗心"], a:0, tip:"仔细 ≈ 认真，反义是马虎。"},
+  {type:"近义词", q:'“高兴”的近义词是？', o:["快乐","难过","生气","害怕"], a:0, tip:"高兴 ≈ 快乐、开心。"},
+  // ===== 反义词 =====
+  {type:"反义词", q:'“黑暗”的反义词是？', o:["光明","漆黑","昏暗","阴沉"], a:0, tip:"黑暗 ↔ 光明。"},
+  {type:"反义词", q:'“失败”的反义词是？', o:["成功","输了","落后","失望"], a:0, tip:"失败 ↔ 成功。"},
+  {type:"反义词", q:'“复杂”的反义词是？', o:["简单","麻烦","困难","繁多"], a:0, tip:"复杂 ↔ 简单。"},
+  {type:"反义词", q:'“仔细”的反义词是？', o:["马虎","认真","小心","专心"], a:0, tip:"仔细 ↔ 马虎、粗心。"},
+  // ===== 多音字 =====
+  {type:"多音字", q:'“放假”的“假”应该读什么音？', o:["jià","jiǎ","xià","gǎ"], a:0, tip:"放假读 jià；真假读 jiǎ。"},
+  {type:"多音字", q:'“弹琴”的“弹”应该读什么音？', o:["tán","dàn","tuán","dǎn"], a:0, tip:"弹琴读 tán；子弹读 dàn。"},
+  {type:"多音字", q:'“头发”的“发”应该读什么音？', o:["fà","fā","fǎ","fáng"], a:0, tip:"头发读 fà；发现读 fā。"},
+  {type:"多音字", q:'“数一数”的“数”应该读什么音？', o:["shǔ","shù","shuō","sù"], a:0, tip:"数数读 shǔ；数学读 shù。"},
+  // ===== 字词 / 形近字 / 易错字 =====
+  {type:"字词", q:'“口（　）”表示想喝水，应该用哪个字？', o:["渴","喝","碣","揭"], a:0, tip:"口渴用“渴”（三点水）；喝水用“喝”（口字旁）。"},
+  {type:"字词", q:'下面哪个词语没有错别字？', o:["专心致志","专心至志","专心制志","专心治志"], a:0, tip:"正确写法是“专心致志”。"},
+  {type:"字词", q:'“蜜蜂”的“蜜”下面是什么部首？', o:["虫","宀","必","心"], a:0, tip:"“蜜”下面是“虫”字底，和昆虫有关。"},
+  {type:"字词", q:'“yóu piào（信封上贴的）”正确写法是？', o:["邮票","油票","由票","游票"], a:0, tip:"寄信用的是“邮票”。"},
+  // ===== 课文常识 / 寓言道理 =====
+  {type:"课文常识", q:'寓言《守株待兔》告诉我们的道理是？', o:["不能靠运气和侥幸，要踏实努力","做事要快","要多读书","要听爸爸妈妈的话"], a:0, tip:"农夫等着兔子撞树，比喻不劳而获、心存侥幸。"},
+  {type:"课文常识", q:'《纸的发明》中改进了造纸术的人是谁？', o:["蔡伦","张衡","祖冲之","华佗"], a:0, tip:"东汉蔡伦改进了造纸术。"},
+  {type:"课文常识", q:'《陶罐和铁罐》这则寓言告诉我们？', o:["要看到别人的长处，正视自己的短处","铁比陶结实","不要骄傲就行","要爱惜东西"], a:0, tip:"每个人都有长处和短处，不能只看到自己的优点。"},
+  {type:"课文常识", q:'《赵州桥》是哪个朝代谁设计建造的？', o:["隋朝·李春","唐朝·李白","宋朝·鲁班","明朝·李时珍"], a:0, tip:"赵州桥由隋朝石匠李春设计建造，非常有名。"},
+
+  // ========== 四年级（古诗·字词·课文）==========
+  {type:"古诗", q:'补全诗句：“横看成岭侧成峰，______。”', o:["远近高低各不同","只缘身在此山中","白银盘里一青螺","水光潋滟晴方好"], a:0, tip:"出自苏轼《题西林壁》（四年级）。"},
+  {type:"古诗", q:'“不识庐山真面目，______。”下一句是？', o:["只缘身在此山中","远近高低各不同","为有源头活水来","柳暗花明又一村"], a:0, tip:"出自苏轼《题西林壁》，告诉我们当局者迷。"},
+  {type:"古诗", q:'补全诗句：“莫笑农家腊酒浑，______。”', o:["丰年留客足鸡豚","柳暗花明又一村","山重水复疑无路","衣冠简朴古风存"], a:0, tip:"出自陆游《游山西村》（四年级）。"},
+  {type:"古诗", q:'“山重水复疑无路，______。”下一句是？', o:["柳暗花明又一村","丰年留客足鸡豚","快走踏清秋","一览众山小"], a:0, tip:"出自陆游《游山西村》，比喻绝处逢生。"},
+  {type:"古诗", q:'补全诗句：“绿遍山原白满川，______。”', o:["子规声里雨如烟","村庄儿女各当家","青草池塘处处蛙","也傍桑阴学种瓜"], a:0, tip:"出自翁卷《乡村四月》（四年级）。"},
+  {type:"作者", q:'《题西林壁》《惠崇春江晚景》的作者都是？', o:["苏轼","李白","王维","陆游"], a:0, tip:"都是北宋大文豪苏轼（号东坡）。"},
+  {type:"课文常识", q:'《为中华之崛起而读书》讲的是谁少年立志？', o:["周恩来","毛泽东","邓小平","鲁迅"], a:0, tip:"少年周恩来立志“为中华之崛起而读书”。"},
+  {type:"课文常识", q:'成语“胸有成竹”的意思是？', o:["做事之前已有把握","会画竹子","胸口有竹子","身体强壮"], a:0, tip:"比喻做事之前已有充分准备和把握。"},
+  {type:"好词好句", q:'“鹅毛大雪”用的是什么修辞？', o:["夸张","比喻","拟人","反问"], a:0, tip:"把雪花说得像鹅毛那么大，是夸张（也含比喻）。"},
+  {type:"字词", q:'“一丝不（　）”表示做事认真，填哪个字？', o:["苟","句","狗","钩"], a:0, tip:"成语是“一丝不苟”，苟指马虎。"},
+
+  // ========== 五年级（古诗·成语·文学常识）==========
+  {type:"古诗", q:'补全诗句：“死去元知万事空，______。”', o:["但悲不见九州同","家祭无忘告乃翁","南望王师又一年","铁马冰河入梦来"], a:0, tip:"出自陆游《示儿》（五年级），表达爱国之情。"},
+  {type:"古诗", q:'“王师北定中原日，______。”下一句是？', o:["家祭无忘告乃翁","但悲不见九州同","死去元知万事空","西出阳关无故人"], a:0, tip:"出自陆游《示儿》。"},
+  {type:"古诗", q:'补全诗句：“黄沙百战穿金甲，______。”', o:["不破楼兰终不还","西出阳关无故人","但使龙城飞将在","春风不度玉门关"], a:0, tip:"出自王昌龄《从军行》（五年级）。"},
+  {type:"古诗", q:'“遗民泪尽胡尘里，______。”下一句是？', o:["南望王师又一年","家祭无忘告乃翁","铁马冰河入梦来","映日荷花别样红"], a:0, tip:"出自陆游《秋夜将晓出篱门迎凉有感》。"},
+  {type:"作者", q:'四大名著《西游记》的作者是？', o:["吴承恩","罗贯中","施耐庵","曹雪芹"], a:0, tip:"《西游记》作者是明代吴承恩。"},
+  {type:"作者", q:'四大名著《三国演义》的作者是？', o:["罗贯中","吴承恩","施耐庵","曹雪芹"], a:0, tip:"《三国演义》作者是罗贯中。"},
+  {type:"课文常识", q:'歇后语“孙悟空大闹天宫——”后半句是？', o:["慌了神","一窍不通","自找苦吃","八仙过海"], a:0, tip:"孙悟空大闹天宫——慌了神（众神慌乱）。"},
+  {type:"好词好句", q:'“危楼高百尺，手可摘星辰”用了什么修辞？', o:["夸张","拟人","设问","对偶"], a:0, tip:"楼并没有真的能摘星辰，是夸张。"},
+  {type:"字词", q:'成语“画蛇添足”比喻？', o:["多此一举，反而坏事","画画很好","做事完整","添上脚更好看"], a:0, tip:"比喻做了多余的事，反而把事情弄糟。"},
+  {type:"近义词", q:'“宽阔”的近义词是？', o:["宽广","狭窄","拥挤","细小"], a:0, tip:"宽阔 ≈ 宽广，反义是狭窄。"},
+
+  // ========== 六年级（古诗·名句·文学常识）==========
+  {type:"古诗", q:'补全诗句：“千磨万击还坚劲，______。”', o:["任尔东西南北风","千锤万凿出深山","要留清白在人间","春风不度玉门关"], a:0, tip:"出自郑燮《竹石》（六年级），赞竹子坚韧。"},
+  {type:"古诗", q:'“粉骨碎身浑不怕，______。”下一句是？', o:["要留清白在人间","任尔东西南北风","只留清气满乾坤","柳暗花明又一村"], a:0, tip:"出自于谦《石灰吟》（六年级），借石灰表明高洁志向。"},
+  {type:"古诗", q:'补全诗句：“等闲识得东风面，______。”', o:["万紫千红总是春","二月春风似剪刀","春色满园关不住","映日荷花别样红"], a:0, tip:"出自朱熹《春日》（六年级）。"},
+  {type:"古诗", q:'“问渠那得清如许？______。”下一句是？', o:["为有源头活水来","半亩方塘一鉴开","天光云影共徘徊","不识庐山真面目"], a:0, tip:"出自朱熹《观书有感》，比喻不断学习才有进步。"},
+  {type:"古诗", q:'补全诗句：“纸上得来终觉浅，______。”', o:["绝知此事要躬行","为有源头活水来","学而不思则罔","不破楼兰终不还"], a:0, tip:"出自陆游《冬夜读书示子聿》，强调要亲身实践。"},
+  {type:"作者", q:'《草船借箭》的故事出自哪部名著？', o:["《三国演义》","《西游记》","《水浒传》","《红楼梦》"], a:0, tip:"诸葛亮草船借箭，出自《三国演义》。"},
+  {type:"课文常识", q:'“鞠躬尽瘁，死而后已”最常用来形容哪位历史人物？', o:["诸葛亮","曹操","刘备","关羽"], a:0, tip:"诸葛亮一生为蜀汉操劳，鞠躬尽瘁。"},
+  {type:"好词好句", q:'“这件事难道不是真的吗？”这是什么句式？', o:["反问句","疑问句","设问句","感叹句"], a:0, tip:"反问句：用问的形式表达肯定（确实是真的）。"},
+  {type:"字词", q:'成语“滥竽充数”中的“竽”指什么？', o:["一种乐器","鱼","房屋","车马"], a:0, tip:"竽是古代一种吹奏乐器，比喻没本事的人混在里面充数。"},
+  {type:"近义词", q:'“沉着”的近义词是？', o:["冷静","慌张","紧张","急躁"], a:0, tip:"沉着 ≈ 冷静、镇定，反义是慌张。"},
+];
+
+/* ---------------- 段位系统 ---------------- */
+// 按“累计胜场”升段，越往后越荣耀；wins=升到该段所需的累计胜场
+const RANKS = [
+  {wins:0,   badge:"🌱", name:"花间萌新"},
+  {wins:2,   badge:"🌿", name:"含苞学徒"},
+  {wins:5,   badge:"🌸", name:"初绽花使"},
+  {wins:9,   badge:"🌺", name:"花林新秀"},
+  {wins:14,  badge:"💮", name:"诗词花匠"},
+  {wins:20,  badge:"🏵️", name:"花神门徒"},
+  {wins:28,  badge:"🌷", name:"百花才子"},
+  {wins:38,  badge:"🌹", name:"花中翘楚"},
+  {wins:50,  badge:"👑", name:"花神之王"},
+];
+function rankByWins(w){ let r=RANKS[0]; for(const t of RANKS){ if(w>=t.wins) r=t; } return r; }
+function nextRank(w){ for(const t of RANKS){ if(w<t.wins) return t; } return null; }
+
+/* ---------------- 历史存档（按名字，localStorage）---------------- */
+const HKEY="huashen_history_v1";
+function loadAll(){ try{ return JSON.parse(localStorage.getItem(HKEY)||"{}"); }catch(e){ return {}; } }
+function saveAll(o){ try{ localStorage.setItem(HKEY, JSON.stringify(o)); }catch(e){} }
+function getRec(name){
+  const all=loadAll();
+  return all[name] || {wins:0, losses:0, plays:0, best:0, streak:0, bestStreak:0};
+}
+function setRec(name, rec){ const all=loadAll(); all[name]=rec; saveAll(all); }
+
+/* ---------------- 状态 ---------------- */
+let selected=null, playerName="", quiz=[], idx=0, correctCount=0;
+let meScore=0, foeScore=0, foeCorrect=0;
+let timer=null, timeLeft=0, answered=false;
+const ROUND=15, PER=10, FOE_CAP=11; // 15题，每题10分，最高150；花神最多答对11题(=110分)
+const TIME_LIMIT=30;
+const $=id=>document.getElementById(id);
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+/* 花神AI：中等偏上，遇强则强，胜率控制在玩家80%+，封顶110分 */
+function deityTurn(){
+  if(foeCorrect>=FOE_CAP) return; // 封顶，不再加分
+  const gap = correctCount - foeCorrect; // 玩家领先多少题
+  let p;
+  if(gap>=2) p=0.92;       // 玩家领先 → 奋起直追
+  else if(gap===1) p=0.5;  // 紧咬比分
+  else p=0.18;             // 玩家未领先 → 偶尔超前，制造紧张
+  if(Math.random()<p){ foeCorrect++; foeScore=foeCorrect*PER; }
+}
+
+/* ---------- 倒计时 ---------- */
+function startTimer(){
+  stopTimer();
+  timeLeft=TIME_LIMIT;
+  paintTimer();
+  timer=setInterval(()=>{
+    timeLeft--;
+    paintTimer();
+    if(timeLeft<=0){ stopTimer(); timeUp(); }
+  },1000);
+}
+function stopTimer(){ if(timer){ clearInterval(timer); timer=null; } }
+function paintTimer(){
+  const pct=Math.max(0,timeLeft/TIME_LIMIT*100);
+  const fill=$("timer-fill"), num=$("timer-num");
+  fill.style.width=pct+"%";
+  num.textContent=timeLeft;
+  fill.className="timer-fill"+(timeLeft<=5?" danger":(timeLeft<=10?" warn":""));
+  num.className="timer-num"+(timeLeft<=5?" danger":"");
+}
+
+/* ---------- 选花页 ---------- */
+function buildSelect(){
+  const grid=$("flower-grid"); grid.innerHTML="";
+  ORDER.forEach(key=>{
+    const f=FLOWERS[key];
+    const div=document.createElement("div");
+    div.className="card";
+    div.innerHTML=flowerSVG(key)+`<div class="name">${f.short}</div><div class="lvl">${f.name.split('·')[1]||''}</div>`;
+    div.onclick=()=>{document.querySelectorAll(".card").forEach(c=>c.classList.remove("selected"));div.classList.add("selected");selected=key;updateStart();};
+    grid.appendChild(div);
+  });
+}
+function updateStart(){
+  const nm=$("player-name").value.trim();
+  const btn=$("start-btn");
+  if(nm && selected){ btn.disabled=false; btn.textContent="⚔️ 挑战「"+FLOWERS[selected].short+"花神」！"; }
+  else { btn.disabled=true; btn.textContent = !nm ? "⚔️ 请先输入你的名字" : "⚔️ 请选择一位花神"; }
+  renderHistoryCard(nm);
+}
+function renderHistoryCard(nm){
+  const card=$("history-card");
+  if(!nm){ card.classList.add("hide"); return; }
+  const rec=getRec(nm);
+  const cur=rankByWins(rec.wins), nxt=nextRank(rec.wins);
+  $("hc-badge").textContent=cur.badge;
+  $("hc-rank").textContent=cur.name;
+  if(rec.plays===0){
+    $("hc-greet").textContent="👋 "+nm+"，第一次来！打败花神就能升段位～";
+  }else{
+    $("hc-greet").textContent="👋 欢迎回来，"+nm+"！" + (rec.streak>=2 ? "（已连胜 "+rec.streak+" 场🔥）" : "");
+  }
+  $("hc-stats").textContent="胜 "+rec.wins+" · 负 "+rec.losses+" · 最高 "+rec.best+" 分";
+  if(nxt){
+    const span=nxt.wins-cur.wins, done=rec.wins-cur.wins;
+    $("hc-progress-fill").style.width=Math.min(100, done/span*100)+"%";
+    $("hc-next").textContent="再赢 "+(nxt.wins-rec.wins)+" 场，升到「"+nxt.badge+" "+nxt.name+"」";
+  }else{
+    $("hc-progress-fill").style.width="100%";
+    $("hc-next").textContent="🎉 已达最高段位「"+cur.badge+" "+cur.name+"」，继续卫冕吧！";
+  }
+  card.classList.remove("hide");
+}
+$("player-name").addEventListener("input", ()=>updateStart());
+
+/* ---------- 开始对战 ---------- */
+function startGame(){
+  playerName=$("player-name").value.trim()||"小勇士";
+  // 每次随机抽题，且尽量类型多样（15题）
+  quiz=pickVaried(ROUND);
+  idx=0; correctCount=0; meScore=0; foeScore=0; foeCorrect=0;
+  $("me-name").textContent=playerName;
+  $("foe-name").textContent=FLOWERS[selected].short+"花神";
+  $("foe-icon").innerHTML=flowerSVG(selected);
+  updateScore();
+  show("page-quiz"); renderQ();
+}
+/* 抽题：先按类型分组，轮流取，保证一局里题型丰富且随机 */
+function pickVaried(n){
+  const byType={};
+  BANK.forEach(q=>{(byType[q.type]=byType[q.type]||[]).push(q);});
+  const types=shuffle(Object.keys(byType));
+  const pools={}; types.forEach(t=>pools[t]=shuffle(byType[t]));
+  const out=[]; let ti=0, guard=0;
+  while(out.length<n && guard<500){
+    const t=types[ti%types.length];
+    if(pools[t].length){ out.push(pools[t].pop()); }
+    ti++; guard++;
+  }
+  return shuffle(out).slice(0,n);
+}
+
+function renderQ(){
+  const item=quiz[idx];
+  $("progress").style.width=((idx)/quiz.length*100)+"%";
+  $("qtag").textContent="第 "+(idx+1)+" / "+quiz.length+" 题 · "+item.type;
+  // 古诗题配上当前花神的花朵图，其它题不配图，保持简洁
+  $("qflower").innerHTML = (item.type==="古诗") ? flowerSVG(selected) : "";
+  $("qtext").textContent=item.q;
+  const opts=item.o.map((t,i)=>({t,ok:i===item.a}));
+  const sh=shuffle(opts);
+  window.__sh=sh;
+  const box=$("options"); box.innerHTML="";
+  sh.forEach(o=>{
+    const b=document.createElement("div");
+    b.className="opt"; b.textContent=o.t;
+    b.onclick=()=>choose(b,o.ok,item,sh);
+    box.appendChild(b);
+  });
+  $("feedback").className="feedback"; $("next-btn").className="next-btn";
+  answered=false;
+  startTimer();
+}
+
+function revealAnswer(item,sh){
+  document.querySelectorAll(".opt").forEach(o=>{const m=sh.find(s=>s.t===o.textContent);if(m&&m.ok)o.classList.add("correct");});
+}
+
+function timeUp(){
+  if(answered) return;
+  answered=true;
+  const item=quiz[idx], sh=window.__sh;
+  document.querySelectorAll(".opt").forEach(o=>o.classList.add("disabled"));
+  deityTurn();
+  if(sh) revealAnswer(item,sh);
+  const fb=$("feedback"); fb.className="feedback show no";
+  $("fb-title").textContent="⏰ 时间到！这一题没拿到分~";
+  finishTurn(item);
+}
+
+function choose(btn,ok,item,sh){
+  if(answered) return;
+  answered=true; stopTimer();
+  window.__sh=sh;
+  document.querySelectorAll(".opt").forEach(o=>o.classList.add("disabled"));
+  const fb=$("feedback");
+  if(ok){
+    btn.classList.add("correct"); correctCount++; meScore=correctCount*PER;
+    fb.className="feedback show ok";
+    $("fb-title").textContent="✓ 答对啦！+10 分，得分追上花神！";
+  }else{
+    btn.classList.add("wrong");
+    revealAnswer(item,sh);
+    fb.className="feedback show no";
+    $("fb-title").textContent="✗ 答错了，这一题没拿到分~";
+  }
+  deityTurn(); // 花神也答这一题
+  finishTurn(item);
+}
+
+function finishTurn(item){
+  updateScore();
+  const lead = meScore>foeScore ? "🔥 你暂时领先，加油保持！"
+             : meScore===foeScore ? "⚖️ 比分咬得很紧，下一题决胜负！"
+             : "💪 花神暂时领先，答对就能反超，别放弃！";
+  $("fb-body").innerHTML='<div class="tip">📖 '+item.tip+'</div><div class="lead">'+lead+'</div>';
+  const nb=$("next-btn"); nb.className="next-btn show";
+  const last=(idx>=quiz.length-1);
+  nb.textContent=last?"查看战果 🏆":"下一题 →";
+}
+function updateScore(){
+  $("me-score").textContent=meScore;
+  $("foe-score").textContent=foeScore;
+  $("side-me").classList.toggle("leading", meScore>=foeScore);
+  $("side-foe").classList.toggle("leading", foeScore>meScore);
+}
+$("next-btn").onclick=()=>{
+  if(idx>=quiz.length-1){finish();}
+  else{idx++;renderQ();}
+};
+
+function finish(){
+  stopTimer();
+  $("progress").style.width="100%";
+  $("result-flower").innerHTML=flowerSVG(selected);
+  $("final-score").textContent=meScore;
+  $("final-correct").textContent=correctCount;
+  $("final-total").textContent=quiz.length;
+  const win = meScore>=foeScore; // 平局也算玩家赢，鼓励为主
+  const foeName=FLOWERS[selected].short+"花神";
+  const oc=$("outcome");
+  if(win){
+    oc.textContent="🎉 "+playerName+" 胜利！"; oc.className="outcome win";
+  }else{
+    oc.textContent="💪 "+playerName+" 惜败！"; oc.className="outcome lose";
+  }
+  let rank,comment;
+  const r=correctCount/quiz.length;
+  if(win){
+    if(r===1){rank="🏆 称号：花神之王";comment="满分通关！你以 "+meScore+" 分完胜 "+foeName+"，古诗好词样样精通，太厉害啦！";}
+    else if(r>=0.8){rank="🌟 称号：语文高手";comment="你以 "+meScore+" : "+foeScore+" 打败了 "+foeName+"！再多记几句就能拿满分，继续挑战吧！";}
+    else {rank="🌸 称号：诗词小达人";comment="恭喜！你以 "+meScore+" : "+foeScore+" 赢了 "+foeName+"！把答错的题再读一遍，下次赢得更漂亮！";}
+  }else{
+    rank="🌱 称号：勇敢挑战者";
+    comment=foeName+" 这次以 "+foeScore+" : "+meScore+" 略胜一筹，但你已经很棒啦！再来一局，相信你一定能反超！";
+  }
+  $("rank").textContent=rank; $("comment").textContent=comment;
+
+  // ---- 记录历史 + 段位 ----
+  const rec=getRec(playerName);
+  const beforeRank=rankByWins(rec.wins);
+  rec.plays++;
+  if(win){ rec.wins++; rec.streak=(rec.streak||0)+1; }
+  else { rec.losses++; rec.streak=0; }
+  rec.bestStreak=Math.max(rec.bestStreak||0, rec.streak);
+  rec.best=Math.max(rec.best||0, meScore);
+  setRec(playerName, rec);
+  renderRankPanel(rec, beforeRank, win);
+
+  show("page-result");
+}
+
+function renderRankPanel(rec, beforeRank, win){
+  const cur=rankByWins(rec.wins), nxt=nextRank(rec.wins);
+  $("rp-badge").textContent=cur.badge;
+  $("rp-name").textContent=cur.name;
+  let nextTxt="";
+  if(cur.name!==beforeRank.name){
+    nextTxt='<span class="rp-up">🎊 段位提升！晋级为「'+cur.badge+' '+cur.name+'」！</span><br>';
+  }
+  if(nxt){
+    const span=nxt.wins-cur.wins, done=rec.wins-cur.wins;
+    $("rp-progress-fill").style.width=Math.min(100, done/span*100)+"%";
+    nextTxt+="再赢 "+(nxt.wins-rec.wins)+" 场，就能升到「"+nxt.badge+" "+nxt.name+"」，加油！";
+  }else{
+    $("rp-progress-fill").style.width="100%";
+    nextTxt+="🏆 你已登顶最高段位「"+cur.badge+" "+cur.name+"」，了不起！";
+  }
+  $("rp-next").innerHTML=nextTxt;
+  let rLine="累计：胜 "+rec.wins+" · 负 "+rec.losses+" · 最高 "+rec.best+" 分";
+  if(rec.streak>=2) rLine+="　🔥 当前连胜 "+rec.streak+" 场";
+  $("rp-record").textContent=rLine;
+}
+
+function show(id){["page-select","page-quiz","page-result"].forEach(p=>$(p).classList.add("hide"));$(id).classList.remove("hide");}
+
+$("start-btn").onclick=()=>{ if(selected && $("player-name").value.trim()) startGame(); };
+$("again-btn").onclick=()=>{
+  selected=null;
+  document.querySelectorAll(".card").forEach(c=>c.classList.remove("selected"));
+  updateStart();
+  show("page-select");
+};
+
+buildSelect(); updateStart();
+</script>
+</body>
+</html>
