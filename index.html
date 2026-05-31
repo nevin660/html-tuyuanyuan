@@ -68,6 +68,14 @@
   }
   .card:hover { transform: translateY(-4px); box-shadow: 0 10px 24px rgba(200,110,50,0.3); }
   .card svg { width: 76px; height: 76px; display: block; margin: 0 auto 8px; }
+  /* 真实照片：圆形缩略图 */
+  .card .flower-img { width: 84px; height: 84px; object-fit: cover; border-radius: 50%;
+    display: block; margin: 0 auto 8px; box-shadow: 0 3px 8px rgba(160,80,40,0.28);
+    border: 3px solid #fff; background:#fff; }
+  .card:hover .flower-img { box-shadow: 0 6px 16px rgba(160,80,40,0.4); }
+  .fighter .top .flower-img { width:40px; height:40px; object-fit:cover; border-radius:50%; border:2px solid #fff; box-shadow:0 1px 4px rgba(160,80,40,0.3); }
+  .qflower .flower-img { width:96px; height:96px; object-fit:cover; border-radius:50%; border:3px solid #fff; box-shadow:0 3px 10px rgba(160,80,40,0.3); }
+  .big-flower .flower-img { width:128px; height:128px; object-fit:cover; border-radius:50%; border:4px solid #fff; box-shadow:0 5px 16px rgba(160,80,40,0.35); }
   .card .name { color: #6b4226; font-size: 17px; font-weight: 700; }
   .card .lvl { color:#c2410c; font-size:12px; margin-top:2px; }
   .card.selected {
@@ -149,6 +157,18 @@
   .result .score-line b { color:#c2410c; font-size:21px; }
   .result .comment { color:#a9714c; margin:14px auto 22px; max-width:540px; line-height:1.6; }
   .hide { display:none !important; }
+
+  /* ---- 桂花特困难模式 ---- */
+  .hard-banner { background: linear-gradient(90deg,#b3261e,#e8542e); color:#fff; font-weight:800;
+    text-align:center; padding:10px 14px; border-radius:14px; margin-bottom:14px; font-size:14px;
+    box-shadow:0 4px 14px rgba(180,40,30,0.4); animation: hardpulse 1.2s ease-in-out infinite; }
+  @keyframes hardpulse { 0%,100%{ transform:scale(1);} 50%{ transform:scale(1.015);} }
+  #page-quiz.hard .timer-fill { background: linear-gradient(90deg,#ff5c5c,#ff2d2d); }
+  #page-quiz.hard .qcard { border-color:#e8542e; box-shadow:0 0 0 2px rgba(232,84,46,0.25); }
+  /* 选花页：困难花神角标 */
+  .card { position:relative; }
+  .card .hard-tag { position:absolute; top:6px; right:6px; background:#e8542e; color:#fff;
+    font-size:10px; font-weight:800; padding:2px 6px; border-radius:8px; box-shadow:0 2px 6px rgba(180,40,30,0.4); }
 </style>
 </head>
 <body>
@@ -177,6 +197,7 @@
 
   <!-- ===== 对战页 ===== -->
   <section id="page-quiz" class="hide">
+    <div class="hard-banner hide" id="hard-banner">🌸 桂花花神是最强对手，相信你！沉住气，一题一题答，你一定可以的！</div>
     <div class="battle-bar">
       <div class="fighter side-me" id="side-me">
         <div class="top"><span class="avatar-emoji">🧒</span>
@@ -253,105 +274,137 @@ const FLOWERS = {
 };
 const ORDER = ["mei","xing","tao","shao","liu","he","kui","gui","ju","furong","ch6","shui"];
 
-/* ---------------- SVG 手绘花朵（写实版）---------------- */
-// 椭圆花瓣环（圆润花瓣，如梅、杏、芙蓉）
-function ellRing(n, rx, ry, cy, fill, stroke, sw){
-  let s=""; for(let i=0;i<n;i++){const a=(360/n)*i;
-    s+=`<ellipse cx="50" cy="${cy}" rx="${rx}" ry="${ry}" fill="${fill}" stroke="${stroke}" stroke-width="${sw||1.2}" transform="rotate(${a} 50 50)"/>`;}
+/* ---------------- SVG 写实花朵 ---------------- */
+// 花瓣路径生成器（基于花心 50,50，朝上）
+function pRound(h,w){ return `M50 50 C ${50-w} ${50-h*0.35} ${50-w*0.92} ${50-h*0.92} 50 ${50-h} C ${50+w*0.92} ${50-h*0.92} ${50+w} ${50-h*0.35} 50 50 Z`; }
+function pPoint(h,w){ return `M50 50 C ${50-w} ${50-h*0.45} ${50-w*0.5} ${50-h*0.9} 50 ${50-h} C ${50+w*0.5} ${50-h*0.9} ${50+w} ${50-h*0.45} 50 50 Z`; }
+function pNotch(h,w){ return `M50 50 C ${50-w} ${50-h*0.4} ${50-w*0.95} ${50-h*0.86} ${50-w*0.3} ${50-h*0.97} L50 ${50-h*0.8} L${50+w*0.3} ${50-h*0.97} C ${50+w*0.95} ${50-h*0.86} ${50+w} ${50-h*0.4} 50 50 Z`; }
+// 花瓣环
+function ring(n, path, fill, stroke, sw, rot0){
+  let s=""; for(let i=0;i<n;i++){const a=(360/n)*i+(rot0||0);
+    s+=`<path d="${path}" fill="${fill}" stroke="${stroke}" stroke-width="${sw}" transform="rotate(${a} 50 50)"/>`;}
   return s;
 }
-// 尖瓣环（桃、荷、水仙等），h=长度 w=半宽
-function petalUp(h,w){return `M50 51 C ${50-w} ${51-h*0.55} ${50-w*0.45} ${51-h} 50 ${51-h} C ${50+w*0.45} ${51-h} ${50+w} ${51-h*0.55} 50 51 Z`;}
-function tipRing(n,h,w,fill,stroke,sw){
-  let s=""; for(let i=0;i<n;i++){const a=(360/n)*i;
-    s+=`<path d="${petalUp(h,w)}" fill="${fill}" stroke="${stroke}" stroke-width="${sw||1.1}" transform="rotate(${a} 50 51)"/>`;}
+// 花瓣脉络（增加质感）
+function veinRing(n,h,w,color,rot0){
+  let s=""; for(let i=0;i<n;i++){const a=(360/n)*i+(rot0||0);
+    s+=`<g transform="rotate(${a} 50 50)" stroke="${color}" stroke-width="0.5" fill="none" opacity="0.4"><path d="M50 50 L50 ${50-h*0.8}"/><path d="M50 50 Q ${50-w*0.3} ${50-h*0.4} ${50-w*0.16} ${50-h*0.72}"/><path d="M50 50 Q ${50+w*0.3} ${50-h*0.4} ${50+w*0.16} ${50-h*0.72}"/></g>`;}
   return s;
 }
-// 雄蕊（中心放射的小点）
-function stamens(n,len,line,dot){
-  let s=""; for(let i=0;i<n;i++){const a=(360/n)*i;
-    s+=`<g transform="rotate(${a} 50 50)"><line x1="50" y1="50" x2="50" y2="${50-len}" stroke="${line}" stroke-width="0.9"/><circle cx="50" cy="${50-len}" r="1.5" fill="${dot}"/></g>`;}
+// 弯曲花蕊
+function stamens(n,len,line,dot,r0){
+  let s=""; for(let i=0;i<n;i++){const a=(360/n)*i+(r0||0);
+    s+=`<g transform="rotate(${a} 50 50)"><path d="M50 50 Q ${50-1.4} ${50-len*0.6} 50 ${50-len}" stroke="${line}" stroke-width="0.8" fill="none"/><circle cx="50" cy="${50-len}" r="1.4" fill="${dot}"/></g>`;}
   return s;
 }
 function flowerSVG(key){
-  const rg=(id,c0,c1)=>`<radialGradient id="${id}" cx="50%" cy="38%" r="62%"><stop offset="0%" stop-color="${c0}"/><stop offset="100%" stop-color="${c1}"/></radialGradient>`;
-  const g=(defs,inner)=>`<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><defs>${defs}</defs>${inner}</svg>`;
+  const rg=(id,c0,c1)=>`<radialGradient id="${id}" cx="50%" cy="50%" r="60%"><stop offset="0%" stop-color="${c0}"/><stop offset="100%" stop-color="${c1}"/></radialGradient>`;
+  const shadow=`<filter id="sf" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="1" stdDeviation="1.1" flood-color="#7a3a1e" flood-opacity="0.22"/></filter>`;
+  const w=(defs,inner)=>`<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><defs>${shadow}${defs}</defs><g filter="url(#sf)">${inner}</g></svg>`;
   switch(key){
-    case "mei": // 梅花：5圆瓣+梅枝+花蕊
-      return g(rg('gmei','#ffe6f0','#f08bb2'),
-        `<path d="M12 92 Q42 74 86 44" stroke="#6e4326" stroke-width="4.5" fill="none" stroke-linecap="round"/>
-         <path d="M58 61 Q70 57 80 61" stroke="#6e4326" stroke-width="2.6" fill="none" stroke-linecap="round"/>
-         ${ellRing(5,12,16,27,'url(#gmei)','#dd6f9c',1.3)}
-         <circle cx="50" cy="50" r="7.5" fill="#fff4d2"/>
-         ${stamens(9,11,'#e58ab0','#f3b53a')}<circle cx="50" cy="50" r="3" fill="#efb13a"/>`);
-    case "xing": // 杏花：5白粉圆瓣+红萼+花蕊
-      return g(rg('gxing','#ffffff','#ffd6df'),
-        `${ellRing(5,12,15,27,'url(#gxing)','#f0b8c4',1.2)}
-         ${[0,72,144,216,288].map(a=>`<path d="M50 38 l3 -7 -6 0 z" fill="#c0392b" transform="rotate(${a} 50 50)"/>`).join("")}
-         <circle cx="50" cy="50" r="7" fill="#fff2c4"/>${stamens(8,10,'#d98aa0','#e0392b')}<circle cx="50" cy="50" r="2.6" fill="#d35400"/>`);
+    case "mei": // 梅花：5凹瓣+梅枝+花蕊
+      return w(rg('g','#fff0f5','#ef82ac')+rg('gc','#fff7e0','#f4c64a'),
+        `<path d="M8 95 Q40 76 94 38" stroke="#6e4326" stroke-width="4" fill="none" stroke-linecap="round"/>
+         <path d="M60 60 Q72 55 86 57" stroke="#6e4326" stroke-width="2.3" fill="none" stroke-linecap="round"/>
+         ${ring(5,pNotch(26,13),'url(#g)','#e07ba6',1)}${veinRing(5,26,13,'#e07ba6')}
+         <circle cx="50" cy="50" r="7" fill="url(#gc)"/>${stamens(10,11,'#e58ab0','#f3b53a')}<circle cx="50" cy="50" r="2.6" fill="#efb13a"/>`);
+    case "xing": // 杏花：5白粉圆瓣+花蕊
+      return w(rg('g','#ffffff','#ffcdd8')+rg('gc','#fff6cf','#f3c24a'),
+        `${ring(5,pRound(25,12),'url(#g)','#ecaebc',1)}${veinRing(5,25,12,'#eeb6c2')}
+         <circle cx="50" cy="50" r="6.5" fill="url(#gc)"/>${stamens(9,10,'#d98aa0','#d8392b')}<circle cx="50" cy="50" r="2.4" fill="#c0392b"/>`);
     case "tao": // 桃花：5尖瓣桃红
-      return g(rg('gtao','#ffd0df','#fb6f9e'),
-        `${tipRing(5,40,15,'url(#gtao)','#ef5f8e',1.3)}
-         <circle cx="50" cy="50" r="6.5" fill="#fff0c2"/>${stamens(10,9,'#e25f8a','#f4c33c')}<circle cx="50" cy="50" r="2.6" fill="#e0794a"/>`);
+      return w(rg('g','#ffd6e2','#f56398'),
+        `${ring(5,pPoint(28,13),'url(#g)','#e85b8b',1)}${veinRing(5,28,13,'#e85b8b')}
+         <circle cx="50" cy="50" r="6" fill="#fff0c2"/>${stamens(10,9,'#e25f8a','#f4c33c')}<circle cx="50" cy="50" r="2.2" fill="#e0794a"/>`);
     case "shao": // 芍药：多层重瓣
-      return g(rg('gshao','#ffc2d6','#e85d86'),
-        `${ellRing(8,13,17,26,'url(#gshao)','#dc4f7a',1.2)}
-         ${ellRing(8,10,13,30,'#ffaecb','#e76b95',1)}
-         ${ellRing(7,7,10,33,'#ffd0e0','#ef82a6',1)}
-         ${ellRing(6,4,6,36,'#ffe2ec','#f3a0bd',0.8)}
-         <circle cx="50" cy="50" r="5" fill="#fff3d0"/>`);
-    case "liu": // 石榴花：红色花萼+皱瓣
-      return g(rg('gliu','#ff7a4d','#d62f1a'),
-        `<path d="M40 92 Q50 100 60 92 L58 70 Q50 76 42 70 Z" fill="#c0341f"/>
-         <path d="M42 72 Q50 66 58 72" stroke="#8f2414" stroke-width="2" fill="none"/>
-         ${tipRing(8,36,11,'url(#gliu)','#b62a16',1.2)}
-         <circle cx="50" cy="50" r="6.5" fill="#ffd24d"/>${stamens(10,8,'#c0341f','#fff0a0')}`);
-    case "he": // 荷花：尖瓣粉红+莲蓬+荷叶
-      return g(rg('ghe','#fff2f7','#f59cc0'),
-        `<ellipse cx="50" cy="84" rx="44" ry="11" fill="#3f9e62"/>
-         <ellipse cx="50" cy="82" rx="44" ry="10" fill="#52bd78"/>
-         <path d="M50 82 L50 58" stroke="#2f8f57" stroke-width="2.4"/>
-         ${tipRing(8,42,10,'url(#ghe)','#ec84ac',1.1)}
-         ${tipRing(6,30,8,'#ffd9e6','#f2a0bf',1)}
-         <ellipse cx="50" cy="49" rx="8.5" ry="7" fill="#bdebcb" stroke="#7cc796" stroke-width="1"/>
-         ${[[46,47],[50,46],[54,47],[48,50],[52,50]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="1.2" fill="#4aa46a"/>`).join("")}`);
-    case "kui": // 蜀葵：大单瓣+深色花心
-      return g(rg('gkui','#ff9bb4','#e34d77'),
-        `${ellRing(6,16,18,24,'url(#gkui)','#cf3f68',1.3)}
-         <circle cx="50" cy="50" r="13" fill="#a81e54"/>
-         <circle cx="50" cy="50" r="6" fill="#ffe27a"/>${stamens(8,5,'#7c1438','#fff0a0')}`);
-    case "gui": // 桂花：成簇小黄花+绿叶
-      return g(rg('ggui','#ffe27a','#f2a91c'),
-        `${[[34,40],[58,38],[44,54],[64,56],[33,60],[52,66],[48,40]].map(([x,y])=>
-          `<g transform="translate(${x-50} ${y-50})">${[0,90,180,270].map(a=>`<ellipse cx="50" cy="44" rx="4.5" ry="6" fill="url(#ggui)" stroke="#dd9a14" stroke-width="0.9" transform="rotate(${a} 50 50)"/>`).join("")}<circle cx="50" cy="50" r="2.2" fill="#b86d12"/></g>`).join("")}
-         <path d="M20 70 Q34 60 44 66" stroke="#3f9e5b" stroke-width="2.4" fill="none" stroke-linecap="round"/>
-         <path d="M76 36 Q64 30 56 36" stroke="#3f9e5b" stroke-width="2.4" fill="none" stroke-linecap="round"/>`);
-    case "ju": // 菊花：多层细长花瓣
-      return g(rg('gju','#ffe27a','#f0a81c'),
-        `${tipRing(20,40,4,'url(#gju)','#e8a519',0.8)}
-         ${tipRing(20,32,4,'#ffe98f','#f0bf3c',0.7)}
-         ${tipRing(14,22,4,'#ffd23f','#e0a017',0.7)}
-         <circle cx="50" cy="50" r="7" fill="#cf8a1f"/>`);
-    case "furong": // 芙蓉：5大尖瓣+花蕊柱
-      return g(rg('gfu','#fff0f5','#f786ab'),
-        `${tipRing(5,42,17,'url(#gfu)','#ee6f9b',1.3)}
-         <circle cx="50" cy="50" r="7" fill="#ff5f8a"/>
-         <line x1="50" y1="50" x2="50" y2="32" stroke="#ffd24d" stroke-width="1.4"/>
-         ${[28,31,34].map(y=>`<circle cx="50" cy="${y}" r="1.6" fill="#ffcf3f"/>`).join("")}`);
-    case "ch6": // 山茶：红色重瓣圆瓣+黄蕊
-      return g(rg('gch','#ff6b7e','#c11d2e'),
-        `${ellRing(7,13,16,27,'url(#gch)','#a3162a',1.2)}
-         ${ellRing(7,9,12,31,'#ef4659','#bd2235',1)}
-         ${ellRing(5,5,8,34,'#f47080','#cf3043',0.9)}
-         <circle cx="50" cy="50" r="6.5" fill="#ffe27a"/>${stamens(12,7,'#caa01f','#fff0a0')}`);
+      return w(rg('g','#ffd0e0','#e0507c')+rg('g2','#ffe0ea','#ef7099'),
+        `${ring(9,pRound(27,11),'url(#g)','#d8497a',1)}
+         ${ring(9,pRound(21,10),'url(#g2)','#e76b95',0.9,20)}
+         ${ring(7,pRound(15,8),'#ffd0e0','#ef82a6',0.8,10)}
+         ${ring(6,pRound(9,6),'#ffe2ec','#f3a0bd',0.7,25)}
+         <circle cx="50" cy="50" r="4.5" fill="#fff3d0"/>${stamens(8,5,'#d8a23a','#ffe27a')}`);
+    case "liu": // 石榴花：红色花萼杯+皱瓣
+      return w(rg('g','#ff7a4d','#d62f1a'),
+        `<path d="M40 96 Q50 104 60 96 L58 72 Q50 78 42 72 Z" fill="#b8311c"/>
+         <path d="M42 73 Q50 67 58 73" stroke="#7e1f10" stroke-width="1.7" fill="none"/>
+         <path d="M44 75 L46 85 M50 76 L50 87 M56 75 L54 85" stroke="#8f2414" stroke-width="0.9"/>
+         ${ring(7,pPoint(30,10),'url(#g)','#b62a16',1)}
+         ${ring(7,pPoint(22,8),'#ff8a5a','#c5331f',0.9,25)}
+         <circle cx="50" cy="50" r="6" fill="#ffd24d"/>${stamens(10,7,'#c0341f','#fff0a0')}`);
+    case "he": // 荷花：荷叶+层叠尖瓣+莲蓬
+      return w(rg('g','#fff4f8','#f48cb6')+rg('gl','#7fd29a','#3f9e62'),
+        `<path d="M50 88 C 16 86 10 64 19 55 C 30 73 70 73 81 55 C 90 64 84 86 50 88 Z" fill="url(#gl)"/>
+         <path d="M50 86 L50 60" stroke="#2f8f57" stroke-width="2.1"/>
+         ${ring(8,pPoint(40,9),'url(#g)','#ec84ac',1)}
+         ${ring(7,pPoint(30,8),'#ffd9e6','#f2a0bf',0.9,25)}
+         ${ring(5,pPoint(20,7),'#fff0f5','#f4b8cf',0.8,12)}
+         <ellipse cx="50" cy="49" rx="7.5" ry="6" fill="#cdeccf" stroke="#7cc796" stroke-width="1"/>
+         ${[[47,48],[50,46.5],[53,48],[48.5,50.5],[51.5,50.5]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="1.1" fill="#4aa46a"/>`).join("")}`);
+    case "kui": // 蜀葵：大单瓣+脉络+深色花心
+      return w(rg('g','#ffa6bd','#e0436e'),
+        `${ring(6,pRound(30,15),'url(#g)','#cf3f68',1)}${veinRing(6,30,15,'#c33a62')}
+         <circle cx="50" cy="50" r="12" fill="#9e1c4e"/><circle cx="50" cy="50" r="5.5" fill="#ffe27a"/>${stamens(8,4.5,'#7c1438','#fff0a0')}`);
+    case "gui": { // 桂花：绿叶+成簇小黄花
+      const fl=(x,y,s)=>`<g transform="translate(${x-50} ${y-50}) scale(${s})">${[45,135,225,315].map(a=>`<ellipse cx="50" cy="45" rx="4" ry="5.5" fill="url(#g)" stroke="#dd9a14" stroke-width="0.8" transform="rotate(${a} 50 50)"/>`).join("")}<circle cx="50" cy="50" r="2" fill="#b86d12"/></g>`;
+      return w(rg('g','#ffe98f','#f2a91c'),
+        `<path d="M14 66 Q30 50 42 60 Q30 68 14 66 Z" fill="#3f9e5b" stroke="#2f7d46" stroke-width="0.8"/>
+         <path d="M86 38 Q70 24 58 36 Q70 46 86 38 Z" fill="#3f9e5b" stroke="#2f7d46" stroke-width="0.8"/>
+         ${[[36,42,1],[60,40,1],[46,56,1.05],[64,58,0.9],[34,60,0.85],[54,66,0.95],[50,38,0.8]].map(([x,y,s])=>fl(x,y,s)).join("")}`);
+    }
+    case "ju": // 菊花：多层细瓣
+      return w(rg('g','#ffe98f','#f0a81c'),
+        `${ring(22,pPoint(40,3.4),'url(#g)','#e8a519',0.7)}
+         ${ring(22,pPoint(32,3.4),'#ffe27a','#f0bf3c',0.6,8)}
+         ${ring(16,pPoint(23,3.2),'#ffd23f','#e0a017',0.6,4)}
+         ${ring(10,pPoint(13,3),'#f9c531','#d8930f',0.6)}
+         <circle cx="50" cy="50" r="5.5" fill="#cf8a1f"/>`);
+    case "furong": // 芙蓉：5大圆瓣渐变+花蕊柱
+      return w(rg('g','#fff2f7','#f06fa0'),
+        `${ring(5,pRound(40,17),'url(#g)','#ee6f9b',1)}${veinRing(5,40,17,'#ef85ab')}
+         <circle cx="50" cy="50" r="6" fill="#ff5f8a"/>
+         <line x1="50" y1="50" x2="50" y2="28" stroke="#ffce4a" stroke-width="1.6"/>
+         ${[28,31,34,37].map(y=>`<circle cx="50" cy="${y}" r="1.5" fill="#ffcf3f"/>`).join("")}<circle cx="50" cy="26" r="2" fill="#ff7aa0"/>`);
+    case "ch6": // 山茶：层叠红圆瓣+黄蕊簇
+      return w(rg('g','#ff7385','#bd1d2d')+rg('g2','#f4566a','#c5253a'),
+        `${ring(7,pRound(28,13),'url(#g)','#a3162a',1)}
+         ${ring(7,pRound(21,11),'url(#g2)','#bd2235',0.9,25)}
+         ${ring(6,pRound(14,8),'#ef4659','#cf3043',0.8,12)}
+         <circle cx="50" cy="50" r="6" fill="#ffe27a"/>${stamens(14,7,'#d8a81f','#fff0a0')}<circle cx="50" cy="50" r="2.4" fill="#e0b32a"/>`);
     case "shui": // 水仙：6白瓣+橙黄副冠
-      return g(rg('gsh','#ffffff','#eef6da'),
-        `${ellRing(6,11,15,26,'url(#gsh)','#cfe0b4',1.1)}
-         <circle cx="50" cy="50" r="11" fill="#ffe9a8" stroke="#ecae2f" stroke-width="2.4"/>
-         <circle cx="50" cy="50" r="6" fill="#ffd24d"/>${stamens(6,3.5,'#d68f1c','#fff3c0')}`);
+      return w(rg('g','#ffffff','#eef6da')+rg('gc','#ffd24d','#f0972a'),
+        `${ring(6,pPoint(30,11),'url(#g)','#d6e2bd',1)}${veinRing(6,30,11,'#d9e6c3')}
+         <circle cx="50" cy="50" r="11" fill="url(#gc)" stroke="#e08a1c" stroke-width="1.4"/>
+         <circle cx="50" cy="50" r="7" fill="#ffe9a8"/>${stamens(6,3.5,'#d68f1c','#fff3c0')}<circle cx="50" cy="50" r="2.2" fill="#e0972a"/>`);
   }
-  return g('',`<circle cx="50" cy="50" r="30" fill="#ffc6d8"/>`);
+  return w('',`<circle cx="50" cy="50" r="30" fill="#ffc6d8"/>`);
 }
+
+/* ---------------- 真实花卉照片（Wikimedia Commons，免费可商用）---------------- */
+// 值为 Commons 文件名；通过 Special:FilePath 直链，加载失败自动回退到 SVG 插画
+const PHOTO = {
+  mei:    "Prunus mume.JPG",
+  xing:   "Prunus blossom (35110398426).jpg",
+  tao:    "Peach Blossom.JPG",
+  shao:   "Paeonia lactiflora 'Gay Paree'.jpg",
+  liu:    "Pomegranate flowers(23).JPG",
+  he:     "Lotus flower (978659).jpg",
+  kui:    "Stockrose (Alcea rosea) IMG 7694.JPG",
+  gui:    "Osmanthus fragrans var. aurantiacus.JPG",
+  ju:     "Chrysanthemum.JPG",
+  furong: "Hibiscus mutabilis 0408.JPG",
+  ch6:    "Camellia japonica 002.JPG",
+  shui:   "Narcissus tazetta var.chinensis Roem.JPG",
+};
+function photoURL(key, w){
+  return "https://commons.wikimedia.org/wiki/Special:FilePath/"+encodeURIComponent(PHOTO[key])+"?width="+(w||320);
+}
+// 返回 <img> 真实照片；onerror 时整体替换为 SVG 插画（兜底，永不空白）
+function flowerMedia(key, w){
+  const url=photoURL(key, w||320);
+  return '<img class="flower-img" src="'+url+'" alt="'+FLOWERS[key].short+'" loading="lazy" '+
+         'onerror="this.outerHTML=window.__fb(\''+key+'\')">';
+}
+window.__fb=function(key){ return flowerSVG(key); };
 
 /* ---------------- 题库（三年级下册语文重点）----------------
    type: 古诗 / 作者 / 好词好句 / 近义词 / 反义词 / 多音字 / 字词 / 修辞 / 课文常识
@@ -474,14 +527,20 @@ function setRec(name, rec){ const all=loadAll(); all[name]=rec; saveAll(all); }
 let selected=null, playerName="", quiz=[], idx=0, correctCount=0;
 let meScore=0, foeScore=0, foeCorrect=0;
 let timer=null, timeLeft=0, answered=false;
-const ROUND=15, PER=10, FOE_CAP=11; // 15题，每题10分，最高150；花神最多答对11题(=110分)
-const TIME_LIMIT=30;
+let timeLimit=30, hardMode=false; // 本局参数（桂花=特困难：15秒+花神全对）
+const ROUND=15, PER=10, FOE_CAP=11; // 15题，每题10分，最高150；普通花神最多答对11题(=110分)
+const HARD_KEY="gui", HARD_TIME=15;  // 桂花花神：特困难模式
 const $=id=>document.getElementById(id);
 function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 
-/* 花神AI：中等偏上，遇强则强，胜率控制在玩家80%+，封顶110分 */
-function deityTurn(){
-  if(foeCorrect>=FOE_CAP) return; // 封顶，不再加分
+/* 花神AI */
+function deityTurn(correct){
+  if(hardMode){
+    // 桂花特困难：花神每题必对(满分150)，玩家必须15题全对才能打平取胜
+    foeCorrect++; foeScore=foeCorrect*PER;
+    return;
+  }
+  if(foeCorrect>=FOE_CAP) return; // 普通模式封顶110
   const gap = correctCount - foeCorrect; // 玩家领先多少题
   let p;
   if(gap>=2) p=0.92;       // 玩家领先 → 奋起直追
@@ -493,7 +552,7 @@ function deityTurn(){
 /* ---------- 倒计时 ---------- */
 function startTimer(){
   stopTimer();
-  timeLeft=TIME_LIMIT;
+  timeLeft=timeLimit;
   paintTimer();
   timer=setInterval(()=>{
     timeLeft--;
@@ -503,12 +562,14 @@ function startTimer(){
 }
 function stopTimer(){ if(timer){ clearInterval(timer); timer=null; } }
 function paintTimer(){
-  const pct=Math.max(0,timeLeft/TIME_LIMIT*100);
+  const pct=Math.max(0,timeLeft/timeLimit*100);
   const fill=$("timer-fill"), num=$("timer-num");
   fill.style.width=pct+"%";
   num.textContent=timeLeft;
-  fill.className="timer-fill"+(timeLeft<=5?" danger":(timeLeft<=10?" warn":""));
-  num.className="timer-num"+(timeLeft<=5?" danger":"");
+  // 困难模式时间短，按比例变色
+  const warnAt=hardMode?8:10, dangerAt=hardMode?4:5;
+  fill.className="timer-fill"+(timeLeft<=dangerAt?" danger":(timeLeft<=warnAt?" warn":""));
+  num.className="timer-num"+(timeLeft<=dangerAt?" danger":"");
 }
 
 /* ---------- 选花页 ---------- */
@@ -518,7 +579,8 @@ function buildSelect(){
     const f=FLOWERS[key];
     const div=document.createElement("div");
     div.className="card";
-    div.innerHTML=flowerSVG(key)+`<div class="name">${f.short}</div><div class="lvl">${f.name.split('·')[1]||''}</div>`;
+    const hardTag = (key===HARD_KEY) ? '<div class="hard-tag">👹特困难</div>' : '';
+    div.innerHTML=hardTag+flowerMedia(key,320)+`<div class="name">${f.short}</div><div class="lvl">${f.name.split('·')[1]||''}</div>`;
     div.onclick=()=>{document.querySelectorAll(".card").forEach(c=>c.classList.remove("selected"));div.classList.add("selected");selected=key;updateStart();};
     grid.appendChild(div);
   });
@@ -526,7 +588,12 @@ function buildSelect(){
 function updateStart(){
   const nm=$("player-name").value.trim();
   const btn=$("start-btn");
-  if(nm && selected){ btn.disabled=false; btn.textContent="⚔️ 挑战「"+FLOWERS[selected].short+"花神」！"; }
+  if(nm && selected){
+    btn.disabled=false;
+    btn.textContent = (selected===HARD_KEY)
+      ? "🌸 挑战最强「桂花花神」，全力以赴！"
+      : "⚔️ 挑战「"+FLOWERS[selected].short+"花神」！";
+  }
   else { btn.disabled=true; btn.textContent = !nm ? "⚔️ 请先输入你的名字" : "⚔️ 请选择一位花神"; }
   renderHistoryCard(nm);
 }
@@ -558,12 +625,17 @@ $("player-name").addEventListener("input", ()=>updateStart());
 /* ---------- 开始对战 ---------- */
 function startGame(){
   playerName=$("player-name").value.trim()||"小勇士";
+  // 桂花花神 = 特困难模式：15秒限时 + 花神题题全对
+  hardMode = (selected===HARD_KEY);
+  timeLimit = hardMode ? HARD_TIME : 30;
   // 每次随机抽题，且尽量类型多样（15题）
   quiz=pickVaried(ROUND);
   idx=0; correctCount=0; meScore=0; foeScore=0; foeCorrect=0;
   $("me-name").textContent=playerName;
-  $("foe-name").textContent=FLOWERS[selected].short+"花神";
-  $("foe-icon").innerHTML=flowerSVG(selected);
+  $("foe-name").textContent=FLOWERS[selected].short+"花神"+(hardMode?" 👹":"");
+  $("foe-icon").innerHTML=flowerMedia(selected,120);
+  $("page-quiz").classList.toggle("hard", hardMode);
+  $("hard-banner").classList.toggle("hide", !hardMode);
   updateScore();
   show("page-quiz"); renderQ();
 }
@@ -587,7 +659,7 @@ function renderQ(){
   $("progress").style.width=((idx)/quiz.length*100)+"%";
   $("qtag").textContent="第 "+(idx+1)+" / "+quiz.length+" 题 · "+item.type;
   // 古诗题配上当前花神的花朵图，其它题不配图，保持简洁
-  $("qflower").innerHTML = (item.type==="古诗") ? flowerSVG(selected) : "";
+  $("qflower").innerHTML = (item.type==="古诗") ? flowerMedia(selected,200) : "";
   $("qtext").textContent=item.q;
   const opts=item.o.map((t,i)=>({t,ok:i===item.a}));
   const sh=shuffle(opts);
@@ -642,9 +714,16 @@ function choose(btn,ok,item,sh){
 
 function finishTurn(item){
   updateScore();
-  const lead = meScore>foeScore ? "🔥 你暂时领先，加油保持！"
-             : meScore===foeScore ? "⚖️ 比分咬得很紧，下一题决胜负！"
-             : "💪 花神暂时领先，答对就能反超，别放弃！";
+  let lead;
+  if(hardMode){
+    const perfect = (correctCount===idx+1); // 到目前为止全对
+    lead = perfect ? "🔥 太棒了，一路全对！稳住节奏，继续加油！"
+                   : "💪 没关系，调整好心情，把接下来的每题都答好！";
+  }else{
+    lead = meScore>foeScore ? "🔥 你暂时领先，加油保持！"
+         : meScore===foeScore ? "⚖️ 比分咬得很紧，下一题决胜负！"
+         : "💪 花神暂时领先，答对就能反超，别放弃！";
+  }
   $("fb-body").innerHTML='<div class="tip">📖 '+item.tip+'</div><div class="lead">'+lead+'</div>';
   const nb=$("next-btn"); nb.className="next-btn show";
   const last=(idx>=quiz.length-1);
@@ -664,7 +743,7 @@ $("next-btn").onclick=()=>{
 function finish(){
   stopTimer();
   $("progress").style.width="100%";
-  $("result-flower").innerHTML=flowerSVG(selected);
+  $("result-flower").innerHTML=flowerMedia(selected,260);
   $("final-score").textContent=meScore;
   $("final-correct").textContent=correctCount;
   $("final-total").textContent=quiz.length;
@@ -678,7 +757,16 @@ function finish(){
   }
   let rank,comment;
   const r=correctCount/quiz.length;
-  if(win){
+  if(hardMode){
+    // 桂花特困难：只有15题全对(150分)才算胜
+    if(win){
+      rank="👑 称号：桂花花神·克星";
+      comment="🌟 难以置信！你在 15 秒/题 的极限下 15 题全对，击败了最强的桂花花神！自是花中第一流，非你莫属！";
+    }else{
+      rank="🔥 称号：无畏挑战者";
+      comment="你答对了 "+correctCount+" / 15 题（"+meScore+" 分），桂花花神满分 150 太强了！但敢挑战特困难就已经很了不起，再来一次冲击全对吧！";
+    }
+  }else if(win){
     if(r===1){rank="🏆 称号：花神之王";comment="满分通关！你以 "+meScore+" 分完胜 "+foeName+"，古诗好词样样精通，太厉害啦！";}
     else if(r>=0.8){rank="🌟 称号：语文高手";comment="你以 "+meScore+" : "+foeScore+" 打败了 "+foeName+"！再多记几句就能拿满分，继续挑战吧！";}
     else {rank="🌸 称号：诗词小达人";comment="恭喜！你以 "+meScore+" : "+foeScore+" 赢了 "+foeName+"！把答错的题再读一遍，下次赢得更漂亮！";}
