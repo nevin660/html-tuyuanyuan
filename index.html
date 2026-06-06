@@ -165,6 +165,25 @@
   @keyframes hardpulse { 0%,100%{ transform:scale(1);} 50%{ transform:scale(1.015);} }
   #page-quiz.hard .timer-fill { background: linear-gradient(90deg,#ff5c5c,#ff2d2d); }
   #page-quiz.hard .qcard { border-color:#e8542e; box-shadow:0 0 0 2px rgba(232,84,46,0.25); }
+  /* ---- 题型多选面板 ---- */
+  .topic-panel { background: rgba(255,255,255,0.55); border:1px solid rgba(255,180,130,0.45);
+    border-radius:18px; padding:16px; margin:18px 0; }
+  .tp-title { font-weight:800; color:#c2410c; font-size:15px; margin-bottom:12px; }
+  .tp-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+  @media (max-width:680px){ .tp-grid{ grid-template-columns:repeat(2,1fr);} }
+  .tp-item { display:flex; align-items:center; gap:8px; background:#fffdf9; border:2px solid #ffe0c4;
+    border-radius:12px; padding:10px 12px; cursor:pointer; user-select:none; transition:border-color .15s, background .15s; font-size:14px; color:#6b4226; font-weight:600; }
+  .tp-item:hover { border-color:#ff9a3c; }
+  .tp-item.on { border-color:#ff7a3c; background:#fff3e8; }
+  .tp-box { width:20px; height:20px; border-radius:6px; border:2px solid #e8a06a; flex:0 0 auto;
+    display:flex; align-items:center; justify-content:center; font-size:13px; color:#fff; background:#fff; }
+  .tp-item.on .tp-box { background:#ff7a3c; border-color:#ff7a3c; }
+  .tp-actions { display:flex; align-items:center; gap:10px; margin-top:14px; justify-content:center; }
+  .tp-btn { background: linear-gradient(90deg,#ffb347,#ff8a3c); color:#fff; border:none; border-radius:20px;
+    padding:7px 22px; font-weight:800; font-size:14px; cursor:pointer; box-shadow:0 3px 8px rgba(230,120,40,0.3); }
+  .tp-btn.ghost { background:#fff; color:#c2410c; border:2px solid #ffc28a; box-shadow:none; }
+  .tp-count { font-size:13px; color:#a9714c; margin-left:6px; }
+
   /* 选花页：困难花神角标 */
   .card { position:relative; }
   .card .hard-tag { position:absolute; top:6px; right:6px; background:#e8542e; color:#fff;
@@ -177,7 +196,7 @@
   <!-- ===== 选花页 ===== -->
   <section id="page-select">
     <h1>花神语文大对战</h1>
-    <div class="subtitle">输入名字 → 选一位花神当对手 → 15道题、每题10分（满分150）、每题限时30秒，比花神分高就获胜！（3～6年级）</div>
+    <div class="subtitle">输入名字 → 选花神对手 → 勾选想练的题型 → 15道题、每题10分（满分150）、限时30秒，比花神分高就获胜！（3～6年级·含进阶拔高题）</div>
     <div class="name-row"><input id="player-name" maxlength="8" placeholder="✍️ 请输入你的名字" autocomplete="off"></div>
     <div class="history-card hide" id="history-card">
       <div class="hc-left">
@@ -192,6 +211,17 @@
       </div>
     </div>
     <div class="grid" id="flower-grid"></div>
+
+    <div class="topic-panel">
+      <div class="tp-title">📚 选择题型（可多选）</div>
+      <div class="tp-grid" id="topic-grid"></div>
+      <div class="tp-actions">
+        <button class="tp-btn" id="topic-all">全选</button>
+        <button class="tp-btn ghost" id="topic-none">清空</button>
+        <span class="tp-count" id="topic-count"></span>
+      </div>
+    </div>
+
     <button class="start-btn" id="start-btn" disabled>⚔️ 请先输入名字并选择花神</button>
   </section>
 
@@ -495,6 +525,59 @@ const BANK = [
   {type:"好词好句", q:'“这件事难道不是真的吗？”这是什么句式？', o:["反问句","疑问句","设问句","感叹句"], a:0, tip:"反问句：用问的形式表达肯定（确实是真的）。"},
   {type:"字词", q:'成语“滥竽充数”中的“竽”指什么？', o:["一种乐器","鱼","房屋","车马"], a:0, tip:"竽是古代一种吹奏乐器，比喻没本事的人混在里面充数。"},
   {type:"近义词", q:'“沉着”的近义词是？', o:["冷静","慌张","紧张","急躁"], a:0, tip:"沉着 ≈ 冷静、镇定，反义是慌张。"},
+
+  // ================= 进阶·拔高题（难度上调）=================
+  // ---------- 文言文/古文理解 ----------
+  {type:"文言文", q:'“温故而知新”中“故”的意思是？', o:["旧知识、学过的东西","故意","原因","所以"], a:0, tip:"温习旧知识，从而获得新理解。出自《论语》。"},
+  {type:"文言文", q:'“吾日三省吾身”的“三”一般理解为？', o:["多次","三次","第三","三个人"], a:0, tip:"“三”表多次，意为每天多次反省自己。"},
+  {type:"文言文", q:'《守株待兔》“因释其耒而守株”的“释”意思是？', o:["放下","解释","释放","稀释"], a:0, tip:"释＝放下。农夫放下农具（耒）去守树桩。"},
+  {type:"文言文", q:'“弈秋，通国之善弈者也”的“善”意思是？', o:["擅长","善良","好的","友善"], a:0, tip:"善弈＝擅长下棋。弈秋是全国最擅长下棋的人。"},
+  {type:"文言文", q:'“两小儿辩日”中孩子们争论的是什么问题？', o:["太阳什么时候离人近","谁的学问大","天有多高","该不该读书"], a:0, tip:"两小儿争论太阳早晨和中午哪个时候离人更近。"},
+  {type:"文言文", q:'“及其日中如探汤”的“汤”指什么？', o:["热水","汤药","菜汤","河流"], a:0, tip:"古义“汤”指热水。如探汤＝像把手伸进热水里。"},
+  {type:"文言文", q:'“胤恭勤不倦”（囊萤夜读）中“倦”的意思是？', o:["疲倦、懈怠","睡觉","卷曲","厌恶"], a:0, tip:"恭勤不倦＝恭敬勤奋而不知疲倦懈怠。"},
+  // ---------- 成语辨析（用法/易混）----------
+  {type:"成语", q:'形容做事不费力、轻松完成，应用哪个成语？', o:["游刃有余","手忙脚乱","力不从心","半途而废"], a:0, tip:"游刃有余＝技艺纯熟，做起来毫不费力。"},
+  {type:"成语", q:'“鳞次栉比”常用来形容什么？', o:["房屋排列得很密很整齐","鱼很多","梳子整齐","人很拥挤"], a:0, tip:"形容房屋等像鱼鳞和梳齿那样排列得整齐密集。"},
+  {type:"成语", q:'下列哪个成语是“贬义”的？', o:["夸夸其谈","废寝忘食","一丝不苟","锲而不舍"], a:0, tip:"夸夸其谈＝说话浮夸不切实际，是贬义词。"},
+  {type:"成语", q:'“望梅止渴”和下面哪个成语意思最接近？', o:["画饼充饥","守株待兔","名落孙山","雪中送炭"], a:0, tip:"两者都比喻用空想安慰自己。"},
+  {type:"成语", q:'“胸有成竹”这个成语出自谁画竹的故事？', o:["文与可","郑板桥","齐白石","吴道子"], a:0, tip:"出自北宋画家文与可（文同）画竹的典故。"},
+  {type:"成语", q:'用来形容“学习/做事专心到极点”的是？', o:["专心致志","三心二意","心猿意马","心不在焉"], a:0, tip:"其余三个都是“不专心”，只有专心致志是专注。"},
+  // ---------- 关联词 ----------
+  {type:"关联词", q:'选词填空：（　）多读书，（　）能写好作文。', o:["只有…才…","因为…所以…","虽然…但是…","不但…而且…"], a:0, tip:"表示必要条件，用“只有…才…”。"},
+  {type:"关联词", q:'选词填空：他（　）成绩好，（　）从不骄傲。', o:["虽然…但是…","因为…所以…","如果…就…","只要…就…"], a:0, tip:"前后意思转折，用“虽然…但是…”。"},
+  {type:"关联词", q:'选词填空：（　）明天下雨，运动会（　）改期。', o:["如果…就…","不但…而且…","因为…所以…","既…又…"], a:0, tip:"表示假设，用“如果…就…”。"},
+  {type:"关联词", q:'选词填空：这本书（　）有趣，（　）很有教育意义。', o:["不但…而且…","虽然…但是…","只有…才…","与其…不如…"], a:0, tip:"表示递进，用“不但…而且…”。"},
+  // ---------- 病句辨析 ----------
+  {type:"病句", q:'下面哪个句子没有语病？', o:["我们要养成爱护图书的好习惯。","我们要养成爱护图书。","通过这次活动，使我很受教育。","他大约用了十分钟左右。"], a:0, tip:"B成分残缺、C缺主语、D“大约”和“左右”重复。"},
+  {type:"病句", q:'“他基本上把作业全部做完了。”这句话的毛病是？', o:["“基本上”和“全部”矛盾","用词太少","没有标点","主语重复"], a:0, tip:"“基本上”表示大部分，与“全部”自相矛盾。"},
+  {type:"病句", q:'下面哪句用词重复啰嗦？', o:["我大概估计有五十人。","操场上人很多。","他认真地做题。","花儿开了。"], a:0, tip:"“大概”和“估计”意思重复，删去一个。"},
+  {type:"病句", q:'“能不能取得好成绩，关键在于平时努力。”下面哪句与它搭配正确？', o:["本句正确（两面对两面）","应删去“能不能”","应删去“关键”","应改成一面"], a:0, tip:"“能不能”是两面，“是否努力”也是两面，搭配正确。"},
+  // ---------- 标点符号 ----------
+  {type:"标点", q:'“妈妈说明天带我去公园”要表示直接引用，正确的是？', o:['妈妈说：“明天带你去公园。”',"妈妈说，明天带你去公园。","妈妈说（明天带你去公园）。","妈妈说；明天带你去公园。"], a:0, tip:"直接引用要用冒号加引号。"},
+  {type:"标点", q:'表示话还没说完、声音延长，用哪个标点？', o:["省略号……","句号。","问号？","顿号、"], a:0, tip:"省略号表示语意未尽或声音延续。"},
+  {type:"标点", q:'句子中并列的词语之间，应用什么标点隔开？', o:["顿号、","逗号，","分号；","冒号："], a:0, tip:"并列词语之间用顿号，如“苹果、香蕉、橘子”。"},
+  // ---------- 更难古诗（理解/作者/出处）----------
+  {type:"古诗", q:'“随风潜入夜，润物细无声”出自杜甫的哪首诗？', o:["《春夜喜雨》","《绝句》","《望岳》","《闻官军收河南河北》"], a:0, tip:"出自杜甫《春夜喜雨》，写春雨默默滋润万物。"},
+  {type:"古诗", q:'“黑云翻墨未遮山，白雨跳珠乱入船”描写的是？', o:["夏天的暴雨","冬天的雪","秋天的风","春天的花"], a:0, tip:"苏轼《六月二十七日望湖楼醉书》写夏日急雨。"},
+  {type:"古诗", q:'“九曲黄河万里沙，浪淘风簸自天涯”的作者是？', o:["刘禹锡","李白","王之涣","白居易"], a:0, tip:"出自刘禹锡《浪淘沙》。"},
+  {type:"古诗", q:'“遗民泪尽胡尘里，南望王师又一年”表达了诗人怎样的感情？', o:["盼望收复失地的爱国之情","思念家乡","赞美风景","离别之苦"], a:0, tip:"陆游借遗民盼王师，抒发收复中原的爱国情怀。"},
+  {type:"古诗", q:'“等闲识得东风面，万紫千红总是春”中“等闲”意思是？', o:["平常、轻易","空闲","等待","平等"], a:0, tip:"等闲＝平常、轻易。朱熹《春日》。"},
+  {type:"古诗", q:'“故人西辞黄鹤楼，烟花三月下扬州”里“烟花”指？', o:["繁花似锦的春景","烟火爆竹","云雾","柳絮"], a:0, tip:"烟花＝指春天繁盛艳丽的景色。李白《黄鹤楼送孟浩然之广陵》。"},
+  {type:"古诗", q:'“不要人夸好颜色，只留清气满乾坤”赞美的是哪种花的品格？', o:["梅花","菊花","荷花","桃花"], a:0, tip:"王冕《墨梅》，借梅花表达不慕虚名的高洁。"},
+  // ---------- 深度文学/课文常识 ----------
+  {type:"课文常识", q:'《将相和》中“负荆请罪”的“将”指谁？', o:["廉颇","蔺相如","赵王","秦王"], a:0, tip:"廉颇背着荆条向蔺相如请罪，“将”指廉颇。"},
+  {type:"课文常识", q:'“四面楚歌”这个成语和哪位历史人物有关？', o:["项羽","刘邦","韩信","诸葛亮"], a:0, tip:"项羽被围垓下，听到四面楚歌，故事出自楚汉相争。"},
+  {type:"课文常识", q:'《伯牙鼓琴》中钟子期去世后，伯牙为什么破琴绝弦？', o:["再无人懂他的音乐（知音难觅）","琴坏了","他不想弹了","要去远方"], a:0, tip:"伯牙因失去知音而终身不再弹琴，是“知音”典故的由来。"},
+  {type:"课文常识", q:'“卧薪尝胆”说的是哪位君王发愤图强？', o:["越王勾践","吴王夫差","秦始皇","汉武帝"], a:0, tip:"越王勾践睡柴草、尝苦胆，发愤图强终复国。"},
+  {type:"作者", q:'《草原》《猫》《母鸡》的作者，被称为“人民艺术家”的是？', o:["老舍","叶圣陶","巴金","朱自清"], a:0, tip:"老舍，原名舒庆春，被誉为“人民艺术家”。"},
+  {type:"作者", q:'四大名著中，《水浒传》的作者一般认为是？', o:["施耐庵","罗贯中","吴承恩","曹雪芹"], a:0, tip:"《水浒传》作者一般认为是施耐庵。"},
+  {type:"作者", q:'“横眉冷对千夫指，俯首甘为孺子牛”是哪位文学家的名句？', o:["鲁迅","郭沫若","茅盾","巴金"], a:0, tip:"出自鲁迅《自嘲》，体现他爱憎分明的精神。"},
+  // ---------- 字词·拔高（多音/字义/易错）----------
+  {type:"多音字", q:'“便宜”表示价格低时，“便”读什么？', o:["pián","biàn","piàn","biǎn"], a:0, tip:"便宜（价格低）读 pián；方便读 biàn。"},
+  {type:"多音字", q:'“强迫”的“强”应读？', o:["qiǎng","qiáng","jiàng","qiāng"], a:0, tip:"强迫读 qiǎng；强大读 qiáng；倔强读 jiàng。"},
+  {type:"多音字", q:'“处理”的“处”应读？', o:["chǔ","chù","chú","cù"], a:0, tip:"处理读 chǔ（动词）；到处读 chù（名词）。"},
+  {type:"字词", q:'下面哪一组词全部没有错别字？', o:["再接再厉、川流不息","再接再励、穿流不息","变本加利、莫明其妙","不径而走、谈笑风声"], a:0, tip:"正确写法：再接再厉、川流不息、变本加厉、莫名其妙。"},
+  {type:"字词", q:'“一( )莫展”形容毫无办法，括号里填？', o:["筹","愁","酬","绸"], a:0, tip:"成语是“一筹莫展”，筹＝计策、办法。"},
 ];
 
 /* ---------------- 段位系统 ---------------- */
@@ -585,16 +668,59 @@ function buildSelect(){
     grid.appendChild(div);
   });
 }
+
+/* ---------- 题型多选面板 ---------- */
+let allTypes=[], chosenTypes=new Set();
+function buildTopics(){
+  // 题库里出现的全部题型，按固定顺序排列
+  const order=["古诗","作者","课文常识","文言文","成语","好词好句","近义词","反义词","关联词","病句","标点","多音字","字词","修辞"];
+  const present=new Set(BANK.map(q=>q.type));
+  allTypes=order.filter(t=>present.has(t)).concat([...present].filter(t=>!order.includes(t)));
+  chosenTypes=new Set(allTypes); // 默认全选
+  const grid=$("topic-grid"); grid.innerHTML="";
+  allTypes.forEach(t=>{
+    const cnt=BANK.filter(q=>q.type===t).length;
+    const el=document.createElement("div");
+    el.className="tp-item on";
+    el.innerHTML=`<span class="tp-box">✓</span><span>${t}</span>`;
+    el.onclick=()=>{
+      if(chosenTypes.has(t)) chosenTypes.delete(t); else chosenTypes.add(t);
+      el.classList.toggle("on", chosenTypes.has(t));
+      el.querySelector(".tp-box").textContent = chosenTypes.has(t)?"✓":"";
+      updateTopicCount(); updateStart();
+    };
+    grid.appendChild(el);
+  });
+  updateTopicCount();
+}
+function updateTopicCount(){
+  const avail=BANK.filter(q=>chosenTypes.has(q.type)).length;
+  $("topic-count").textContent="已选 "+chosenTypes.size+" 类 · 共 "+avail+" 题";
+}
+$("topic-all").onclick=()=>{ chosenTypes=new Set(allTypes);
+  document.querySelectorAll(".tp-item").forEach(el=>{el.classList.add("on");el.querySelector(".tp-box").textContent="✓";});
+  updateTopicCount(); updateStart(); };
+$("topic-none").onclick=()=>{ chosenTypes.clear();
+  document.querySelectorAll(".tp-item").forEach(el=>{el.classList.remove("on");el.querySelector(".tp-box").textContent="";});
+  updateTopicCount(); updateStart(); };
+
 function updateStart(){
   const nm=$("player-name").value.trim();
   const btn=$("start-btn");
-  if(nm && selected){
+  const avail=BANK.filter(q=>chosenTypes.has(q.type)).length;
+  if(nm && selected && chosenTypes.size>0 && avail>=ROUND){
     btn.disabled=false;
     btn.textContent = (selected===HARD_KEY)
       ? "🌸 挑战最强「桂花花神」，全力以赴！"
       : "⚔️ 挑战「"+FLOWERS[selected].short+"花神」！";
   }
-  else { btn.disabled=true; btn.textContent = !nm ? "⚔️ 请先输入你的名字" : "⚔️ 请选择一位花神"; }
+  else {
+    btn.disabled=true;
+    btn.textContent = !nm ? "⚔️ 请先输入你的名字"
+      : !selected ? "⚔️ 请选择一位花神"
+      : chosenTypes.size===0 ? "⚔️ 请至少选择一种题型"
+      : "⚔️ 所选题型不足"+ROUND+"题，请多选几种";
+  }
   renderHistoryCard(nm);
 }
 function renderHistoryCard(nm){
@@ -639,10 +765,11 @@ function startGame(){
   updateScore();
   show("page-quiz"); renderQ();
 }
-/* 抽题：先按类型分组，轮流取，保证一局里题型丰富且随机 */
+/* 抽题：只从勾选的题型里抽，按类型轮流取，保证一局题型丰富且随机 */
 function pickVaried(n){
+  const pool = BANK.filter(q=>chosenTypes.size===0 || chosenTypes.has(q.type));
   const byType={};
-  BANK.forEach(q=>{(byType[q.type]=byType[q.type]||[]).push(q);});
+  pool.forEach(q=>{(byType[q.type]=byType[q.type]||[]).push(q);});
   const types=shuffle(Object.keys(byType));
   const pools={}; types.forEach(t=>pools[t]=shuffle(byType[t]));
   const out=[]; let ti=0, guard=0;
@@ -822,7 +949,7 @@ $("again-btn").onclick=()=>{
   show("page-select");
 };
 
-buildSelect(); updateStart();
+buildSelect(); buildTopics(); updateStart();
 </script>
 </body>
 </html>
